@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fallout 76 Rare Items Tracker</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
 
@@ -648,13 +647,36 @@
         // Supabase configuration
         const SUPABASE_URL = 'https://ffutcddrgsqtsfnxzhpc.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmdXRjZGRyZ3NxdHNmbnh6aHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMTAyOTQsImV4cCI6MjA5NjU4NjI5NH0.6c9sa0R24-bgZjtgGi8TkhL-ydwQuP3ijQuFAtdk7go';
-
-        const { createClient } = window.supabase;
-        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+        const API_URL = SUPABASE_URL + '/rest/v1';
 
         let currentUser = null;
         let currentViewingUserId = null;
         let allUsers = [];
+
+        // Helper function for API calls
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_KEY
+                }
+            };
+
+            if (body) options.body = JSON.stringify(body);
+
+            try {
+                const response = await fetch(API_URL + endpoint, options);
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'API Error');
+                }
+                return await response.json();
+            } catch (error) {
+                throw error;
+            }
+        }
 
         // Authentication
         async function signup() {
@@ -668,13 +690,7 @@
             }
 
             try {
-                // Insert user into users table
-                const { data, error } = await supabase
-                    .from('users')
-                    .insert([{ username, email }])
-                    .select();
-
-                if (error) throw error;
+                const result = await apiCall('/users', 'POST', { username, email });
                 alert('Account created! Now login.');
                 document.getElementById('username').value = '';
                 document.getElementById('email').value = '';
@@ -692,16 +708,11 @@
             }
 
             try {
-                const { data, error } = await supabase
-                    .from('users')
-                    .select('*')
-                    .eq('username', username)
-                    .single();
+                const result = await apiCall('/users?username=eq.' + encodeURIComponent(username));
+                if (!result || result.length === 0) throw new Error('User not found');
 
-                if (error) throw new Error('User not found');
-
-                currentUser = data;
-                currentViewingUserId = data.id;
+                currentUser = result[0];
+                currentViewingUserId = result[0].id;
                 await loadAllUsers();
                 showTrackerUI();
             } catch (error) {
@@ -719,8 +730,12 @@
         }
 
         async function loadAllUsers() {
-            const { data } = await supabase.from('users').select('*');
-            allUsers = data || [];
+            try {
+                allUsers = await apiCall('/users');
+            } catch (error) {
+                console.error('Error loading users:', error);
+                allUsers = [];
+            }
             renderUserTabs();
         }
 
@@ -759,49 +774,47 @@
         }
 
         async function getItems(category, rarity = null) {
-            let query = supabase
-                .from('tracker_items')
-                .select('*')
-                .eq('user_id', currentViewingUserId)
-                .eq('category', category);
-
-            if (rarity) query = query.eq('rarity', rarity);
-
-            const { data } = await query;
-            return data || [];
+            try {
+                let endpoint = `/tracker_items?user_id=eq.${currentViewingUserId}&category=eq.${encodeURIComponent(category)}`;
+                if (rarity) endpoint += `&rarity=eq.${encodeURIComponent(rarity)}`;
+                return await apiCall(endpoint);
+            } catch (error) {
+                console.error('Error getting items:', error);
+                return [];
+            }
         }
 
         async function addItem(category, itemName, rarity = null) {
-            const { error } = await supabase.from('tracker_items').insert([{
-                user_id: currentViewingUserId,
-                category,
-                item_name: itemName,
-                rarity,
-                earned: false
-            }]);
-
-            if (error) alert('Error adding item');
-            else render();
+            try {
+                await apiCall('/tracker_items', 'POST', {
+                    user_id: currentViewingUserId,
+                    category,
+                    item_name: itemName,
+                    rarity,
+                    earned: false
+                });
+                render();
+            } catch (error) {
+                alert('Error adding item: ' + error.message);
+            }
         }
 
         async function toggleItem(itemId, earned) {
-            const { error } = await supabase
-                .from('tracker_items')
-                .update({ earned: !earned })
-                .eq('id', itemId);
-
-            if (error) alert('Error updating item');
-            else render();
+            try {
+                await apiCall(`/tracker_items?id=eq.${itemId}`, 'PATCH', { earned: !earned });
+                render();
+            } catch (error) {
+                alert('Error updating item: ' + error.message);
+            }
         }
 
         async function deleteItem(itemId) {
-            const { error } = await supabase
-                .from('tracker_items')
-                .delete()
-                .eq('id', itemId);
-
-            if (error) alert('Error deleting item');
-            else render();
+            try {
+                await apiCall(`/tracker_items?id=eq.${itemId}`, 'DELETE');
+                render();
+            } catch (error) {
+                alert('Error deleting item: ' + error.message);
+            }
         }
 
         // Category helpers
