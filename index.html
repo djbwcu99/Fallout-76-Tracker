@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fallout 76 Rare Items Tracker</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
 
@@ -397,6 +398,105 @@
             color: #000;
             box-shadow: 0 0 15px rgba(255, 68, 68, 0.6);
         }
+
+        .auth-panel {
+            background: rgba(0, 40, 0, 0.7);
+            border: 2px solid #00ff41;
+            padding: 20px;
+            margin-bottom: 20px;
+            max-width: 400px;
+        }
+
+        .auth-panel h3 {
+            color: #00ff41;
+            margin-bottom: 15px;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .auth-form input {
+            padding: 10px;
+            background: rgba(0, 30, 0, 0.9);
+            border: 2px solid #00ff41;
+            color: #00ff41;
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+        }
+
+        .auth-form button {
+            padding: 10px;
+            background: #00aa20;
+            border: 2px solid #00ff41;
+            color: #000;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .auth-form button:hover {
+            background: #00ff41;
+        }
+
+        .user-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        .user-tab {
+            padding: 10px 15px;
+            background: rgba(0, 40, 0, 0.6);
+            border: 2px solid #00aa20;
+            color: #00ff41;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .user-tab.active {
+            background: #00aa20;
+            border-color: #00ff41;
+            color: #000;
+        }
+
+        .user-tab:hover {
+            background: rgba(0, 80, 0, 0.8);
+        }
+
+        .logout-btn {
+            padding: 8px 12px;
+            background: #aa0000;
+            border: 2px solid #ff4444;
+            color: #ffcccc;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: #ff4444;
+            color: #000;
+        }
+
+        .auth-info {
+            color: #00aa20;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -406,6 +506,31 @@
             <button class="export-btn" onclick="openExportModal()">📊 Export</button>
         </div>
         <p class="subtitle">Track your equipment and titles earned</p>
+
+        <!-- Auth Panel -->
+        <div id="authPanel" class="auth-panel">
+            <h3>Sign In / Create Account</h3>
+            <div class="auth-form">
+                <input type="text" id="username" placeholder="Username">
+                <input type="email" id="email" placeholder="Email">
+                <input type="password" id="password" placeholder="Password">
+                <button onclick="signup()">Create Account</button>
+                <button onclick="login()">Login</button>
+            </div>
+        </div>
+
+        <!-- User Logged In Panel -->
+        <div id="loggedInPanel" class="hidden" style="margin-bottom: 20px;">
+            <div class="auth-info">
+                Logged in as: <strong id="currentUsername"></strong>
+                <button class="logout-btn" onclick="logout()" style="margin-left: 10px;">Logout</button>
+            </div>
+        </div>
+
+        <!-- User Tabs -->
+        <div id="userTabsContainer" class="hidden">
+            <div class="user-tabs" id="userTabs"></div>
+        </div>
 
         <!-- Export Modal -->
         <div id="exportModal" class="modal">
@@ -419,7 +544,7 @@
             </div>
         </div>
 
-        <div class="sections">
+        <div id="sections" class="sections hidden">
             <!-- Equipment Section -->
             <div class="section">
                 <h2>Equipment</h2>
@@ -496,7 +621,7 @@
         </div>
 
         <!-- Stats Section -->
-        <div class="stats">
+        <div id="stats" class="stats hidden">
             <div class="stats-grid">
                 <div class="stat-box">
                     <div class="stat-number" id="equipmentEarned">0</div>
@@ -520,126 +645,243 @@
     </div>
 
     <script>
-        const STORAGE_KEYS = {
-            equipment: 'fo76_equipment',
-            playerTitles: 'fo76_playerTitles',
-            campTitles: 'fo76_campTitles',
-            mods1Star: 'fo76_mods1Star',
-            mods2Star: 'fo76_mods2Star',
-            mods3Star: 'fo76_mods3Star',
-            mods4Star: 'fo76_mods4Star'
-        };
+        // Supabase configuration
+        const SUPABASE_URL = 'https://ffutcddrgsqtsfnxzhpc.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmdXRjZGRyZ3NxdHNmbnh6aHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMTAyOTQsImV4cCI6MjA5NjU4NjI5NH0.6c9sa0R24-bgZjtgGi8TkhL-ydwQuP3ijQuFAtdk7go';
 
-        // Initialize with default items
-        function initializeDefaults() {
-            if (!localStorage.getItem(STORAGE_KEYS.equipment)) {
-                const defaultEquipment = ['Power Armor Set', 'Rare Weapons', 'Rare Apparel'];
-                localStorage.setItem(STORAGE_KEYS.equipment, JSON.stringify(defaultEquipment.map(item => ({ name: item, earned: false }))));
+        const { createClient } = window.supabase;
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentUser = null;
+        let currentViewingUserId = null;
+        let allUsers = [];
+
+        // Authentication
+        async function signup() {
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (!username || !email || !password) {
+                alert('Please fill all fields');
+                return;
             }
-            if (!localStorage.getItem(STORAGE_KEYS.playerTitles)) {
-                const defaultTitles = ['Enclave Commander', 'Raider Queen', 'Brotherhood Elder'];
-                localStorage.setItem(STORAGE_KEYS.playerTitles, JSON.stringify(defaultTitles.map(item => ({ name: item, earned: false }))));
-            }
-            if (!localStorage.getItem(STORAGE_KEYS.campTitles)) {
-                const defaultTitles = ['Magnificent Camp', 'Fortress Base', 'Themed Paradise'];
-                localStorage.setItem(STORAGE_KEYS.campTitles, JSON.stringify(defaultTitles.map(item => ({ name: item, earned: false }))));
-            }
-            if (!localStorage.getItem(STORAGE_KEYS.mods1Star)) {
-                localStorage.setItem(STORAGE_KEYS.mods1Star, JSON.stringify([]));
-            }
-            if (!localStorage.getItem(STORAGE_KEYS.mods2Star)) {
-                localStorage.setItem(STORAGE_KEYS.mods2Star, JSON.stringify([]));
-            }
-            if (!localStorage.getItem(STORAGE_KEYS.mods3Star)) {
-                localStorage.setItem(STORAGE_KEYS.mods3Star, JSON.stringify([]));
-            }
-            if (!localStorage.getItem(STORAGE_KEYS.mods4Star)) {
-                localStorage.setItem(STORAGE_KEYS.mods4Star, JSON.stringify([]));
+
+            try {
+                // Insert user into users table
+                const { data, error } = await supabase
+                    .from('users')
+                    .insert([{ username, email }])
+                    .select();
+
+                if (error) throw error;
+                alert('Account created! Now login.');
+                document.getElementById('username').value = '';
+                document.getElementById('email').value = '';
+                document.getElementById('password').value = '';
+            } catch (error) {
+                alert('Error: ' + error.message);
             }
         }
 
-        function getItems(key) {
-            const items = localStorage.getItem(key);
-            return items ? JSON.parse(items) : [];
+        async function login() {
+            const username = document.getElementById('username').value.trim();
+            if (!username) {
+                alert('Please enter username');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('username', username)
+                    .single();
+
+                if (error) throw new Error('User not found');
+
+                currentUser = data;
+                currentViewingUserId = data.id;
+                await loadAllUsers();
+                showTrackerUI();
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
         }
 
-        function saveItems(key, items) {
-            localStorage.setItem(key, JSON.stringify(items));
-            render();
+        function logout() {
+            currentUser = null;
+            currentViewingUserId = null;
+            showAuthUI();
+            document.getElementById('username').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
         }
 
-        function renderList(containerId, key) {
-            const items = getItems(key);
-            const container = document.getElementById(containerId);
-            container.innerHTML = items.map((item, index) => `
-                <div class="item">
-                    <input type="checkbox" ${item.earned ? 'checked' : ''}
-                           onchange="toggleItem('${key}', ${index})">
-                    <label>${item.name}</label>
-                    <button class="delete-btn" onclick="deleteItem('${key}', ${index})">×</button>
-                </div>
+        async function loadAllUsers() {
+            const { data } = await supabase.from('users').select('*');
+            allUsers = data || [];
+            renderUserTabs();
+        }
+
+        function renderUserTabs() {
+            const container = document.getElementById('userTabs');
+            container.innerHTML = allUsers.map(user => `
+                <button class="user-tab ${user.id === currentViewingUserId ? 'active' : ''}"
+                        onclick="switchUser('${user.id}')">
+                    ${user.username}
+                </button>
             `).join('');
         }
 
-        function toggleItem(key, index) {
-            const items = getItems(key);
-            items[index].earned = !items[index].earned;
-            saveItems(key, items);
+        function switchUser(userId) {
+            currentViewingUserId = userId;
+            renderUserTabs();
+            render();
         }
 
-        function deleteItem(key, index) {
-            const items = getItems(key);
-            items.splice(index, 1);
-            saveItems(key, items);
+        function showAuthUI() {
+            document.getElementById('authPanel').classList.remove('hidden');
+            document.getElementById('loggedInPanel').classList.add('hidden');
+            document.getElementById('userTabsContainer').classList.add('hidden');
+            document.getElementById('sections').classList.add('hidden');
+            document.getElementById('stats').classList.add('hidden');
         }
 
-        function addEquipment() {
-            addItem(STORAGE_KEYS.equipment, 'equipmentInput');
+        function showTrackerUI() {
+            document.getElementById('authPanel').classList.add('hidden');
+            document.getElementById('loggedInPanel').classList.remove('hidden');
+            document.getElementById('userTabsContainer').classList.remove('hidden');
+            document.getElementById('sections').classList.remove('hidden');
+            document.getElementById('stats').classList.remove('hidden');
+            document.getElementById('currentUsername').textContent = currentUser.username;
+            render();
         }
 
-        function addPlayerTitle() {
-            addItem(STORAGE_KEYS.playerTitles, 'playerTitlesInput');
+        async function getItems(category, rarity = null) {
+            let query = supabase
+                .from('tracker_items')
+                .select('*')
+                .eq('user_id', currentViewingUserId)
+                .eq('category', category);
+
+            if (rarity) query = query.eq('rarity', rarity);
+
+            const { data } = await query;
+            return data || [];
         }
 
-        function addCampTitle() {
-            addItem(STORAGE_KEYS.campTitles, 'campTitlesInput');
+        async function addItem(category, itemName, rarity = null) {
+            const { error } = await supabase.from('tracker_items').insert([{
+                user_id: currentViewingUserId,
+                category,
+                item_name: itemName,
+                rarity,
+                earned: false
+            }]);
+
+            if (error) alert('Error adding item');
+            else render();
         }
 
-        function addMod1Star() {
-            addItem(STORAGE_KEYS.mods1Star, 'mods1StarInput');
+        async function toggleItem(itemId, earned) {
+            const { error } = await supabase
+                .from('tracker_items')
+                .update({ earned: !earned })
+                .eq('id', itemId);
+
+            if (error) alert('Error updating item');
+            else render();
         }
 
-        function addMod2Star() {
-            addItem(STORAGE_KEYS.mods2Star, 'mods2StarInput');
+        async function deleteItem(itemId) {
+            const { error } = await supabase
+                .from('tracker_items')
+                .delete()
+                .eq('id', itemId);
+
+            if (error) alert('Error deleting item');
+            else render();
         }
 
-        function addMod3Star() {
-            addItem(STORAGE_KEYS.mods3Star, 'mods3StarInput');
-        }
-
-        function addMod4Star() {
-            addItem(STORAGE_KEYS.mods4Star, 'mods4StarInput');
-        }
-
-        function addItem(key, inputId) {
-            const input = document.getElementById(inputId);
-            const name = input.value.trim();
-            if (name) {
-                const items = getItems(key);
-                items.push({ name, earned: false });
-                saveItems(key, items);
+        // Category helpers
+        async function addEquipment() {
+            const input = document.getElementById('equipmentInput');
+            if (input.value.trim()) {
+                await addItem('equipment', input.value.trim());
                 input.value = '';
             }
         }
 
-        function updateStats() {
-            const equipment = getItems(STORAGE_KEYS.equipment);
-            const playerTitles = getItems(STORAGE_KEYS.playerTitles);
-            const campTitles = getItems(STORAGE_KEYS.campTitles);
-            const mods1Star = getItems(STORAGE_KEYS.mods1Star);
-            const mods2Star = getItems(STORAGE_KEYS.mods2Star);
-            const mods3Star = getItems(STORAGE_KEYS.mods3Star);
-            const mods4Star = getItems(STORAGE_KEYS.mods4Star);
+        async function addPlayerTitle() {
+            const input = document.getElementById('playerTitlesInput');
+            if (input.value.trim()) {
+                await addItem('titles', input.value.trim(), 'player');
+                input.value = '';
+            }
+        }
+
+        async function addCampTitle() {
+            const input = document.getElementById('campTitlesInput');
+            if (input.value.trim()) {
+                await addItem('titles', input.value.trim(), 'camp');
+                input.value = '';
+            }
+        }
+
+        async function addMod1Star() {
+            const input = document.getElementById('mods1StarInput');
+            if (input.value.trim()) {
+                await addItem('mods', input.value.trim(), '1-Star');
+                input.value = '';
+            }
+        }
+
+        async function addMod2Star() {
+            const input = document.getElementById('mods2StarInput');
+            if (input.value.trim()) {
+                await addItem('mods', input.value.trim(), '2-Star');
+                input.value = '';
+            }
+        }
+
+        async function addMod3Star() {
+            const input = document.getElementById('mods3StarInput');
+            if (input.value.trim()) {
+                await addItem('mods', input.value.trim(), '3-Star');
+                input.value = '';
+            }
+        }
+
+        async function addMod4Star() {
+            const input = document.getElementById('mods4StarInput');
+            if (input.value.trim()) {
+                await addItem('mods', input.value.trim(), '4-Star');
+                input.value = '';
+            }
+        }
+
+        async function renderList(containerId, category, rarity = null) {
+            const items = await getItems(category, rarity);
+            const container = document.getElementById(containerId);
+            container.innerHTML = items.map(item => `
+                <div class="item">
+                    <input type="checkbox" ${item.earned ? 'checked' : ''}
+                           onchange="toggleItem('${item.id}', ${item.earned})">
+                    <label>${item.item_name}</label>
+                    <button class="delete-btn" onclick="deleteItem('${item.id})">×</button>
+                </div>
+            `).join('');
+        }
+
+        async function updateStats() {
+            const equipment = await getItems('equipment');
+            const playerTitles = await getItems('titles', 'player');
+            const campTitles = await getItems('titles', 'camp');
+            const mods1Star = await getItems('mods', '1-Star');
+            const mods2Star = await getItems('mods', '2-Star');
+            const mods3Star = await getItems('mods', '3-Star');
+            const mods4Star = await getItems('mods', '4-Star');
 
             const equipmentEarned = equipment.filter(i => i.earned).length;
             const titlesEarned = [...playerTitles, ...campTitles].filter(i => i.earned).length;
@@ -652,22 +894,27 @@
             document.getElementById('totalEarned').textContent = totalEarned;
         }
 
-        function render() {
-            renderList('equipmentList', STORAGE_KEYS.equipment);
-            renderList('playerTitlesList', STORAGE_KEYS.playerTitles);
-            renderList('campTitlesList', STORAGE_KEYS.campTitles);
-            renderList('mods1StarList', STORAGE_KEYS.mods1Star);
-            renderList('mods2StarList', STORAGE_KEYS.mods2Star);
-            renderList('mods3StarList', STORAGE_KEYS.mods3Star);
-            renderList('mods4StarList', STORAGE_KEYS.mods4Star);
-            updateStats();
+        async function render() {
+            if (!currentUser) return;
+            await renderList('equipmentList', 'equipment');
+            await renderList('playerTitlesList', 'titles', 'player');
+            await renderList('campTitlesList', 'titles', 'camp');
+            await renderList('mods1StarList', 'mods', '1-Star');
+            await renderList('mods2StarList', 'mods', '2-Star');
+            await renderList('mods3StarList', 'mods', '3-Star');
+            await renderList('mods4StarList', 'mods', '4-Star');
+            await updateStats();
         }
 
-        function resetAll() {
+        async function resetAll() {
             if (confirm('Reset all data? This cannot be undone.')) {
-                localStorage.clear();
-                initializeDefaults();
-                render();
+                const { error } = await supabase
+                    .from('tracker_items')
+                    .delete()
+                    .eq('user_id', currentViewingUserId);
+
+                if (error) alert('Error resetting data');
+                else render();
             }
         }
 
@@ -679,37 +926,34 @@
             document.getElementById('exportModal').style.display = 'none';
         }
 
-        function exportToExcel() {
-            const equipment = getItems(STORAGE_KEYS.equipment);
-            const playerTitles = getItems(STORAGE_KEYS.playerTitles);
-            const campTitles = getItems(STORAGE_KEYS.campTitles);
-            const mods1Star = getItems(STORAGE_KEYS.mods1Star);
-            const mods2Star = getItems(STORAGE_KEYS.mods2Star);
-            const mods3Star = getItems(STORAGE_KEYS.mods3Star);
-            const mods4Star = getItems(STORAGE_KEYS.mods4Star);
+        async function exportToExcel() {
+            const equipment = await getItems('equipment');
+            const playerTitles = await getItems('titles', 'player');
+            const campTitles = await getItems('titles', 'camp');
+            const mods1Star = await getItems('mods', '1-Star');
+            const mods2Star = await getItems('mods', '2-Star');
+            const mods3Star = await getItems('mods', '3-Star');
+            const mods4Star = await getItems('mods', '4-Star');
 
             const wb = XLSX.utils.book_new();
 
-            // Equipment sheet
-            const equipmentData = [['Item', 'Earned']].concat(equipment.map(e => [e.name, e.earned ? 'Yes' : 'No']));
+            const equipmentData = [['Item', 'Earned']].concat(equipment.map(e => [e.item_name, e.earned ? 'Yes' : 'No']));
             const equipmentSheet = XLSX.utils.aoa_to_sheet(equipmentData);
             XLSX.utils.book_append_sheet(wb, equipmentSheet, 'Equipment');
 
-            // Titles sheet
             const titlesData = [['Item', 'Type', 'Earned']].concat(
-                playerTitles.map(t => [t.name, 'Player', t.earned ? 'Yes' : 'No']).concat(
-                    campTitles.map(t => [t.name, 'Camp', t.earned ? 'Yes' : 'No'])
+                playerTitles.map(t => [t.item_name, 'Player', t.earned ? 'Yes' : 'No']).concat(
+                    campTitles.map(t => [t.item_name, 'Camp', t.earned ? 'Yes' : 'No'])
                 )
             );
             const titlesSheet = XLSX.utils.aoa_to_sheet(titlesData);
             XLSX.utils.book_append_sheet(wb, titlesSheet, 'Titles');
 
-            // Mods sheet
             const modsData = [['Item', 'Rarity', 'Earned']].concat(
-                mods1Star.map(m => [m.name, '1-Star', m.earned ? 'Yes' : 'No']).concat(
-                    mods2Star.map(m => [m.name, '2-Star', m.earned ? 'Yes' : 'No']).concat(
-                        mods3Star.map(m => [m.name, '3-Star', m.earned ? 'Yes' : 'No']).concat(
-                            mods4Star.map(m => [m.name, '4-Star', m.earned ? 'Yes' : 'No'])
+                mods1Star.map(m => [m.item_name, '1-Star', m.earned ? 'Yes' : 'No']).concat(
+                    mods2Star.map(m => [m.item_name, '2-Star', m.earned ? 'Yes' : 'No']).concat(
+                        mods3Star.map(m => [m.item_name, '3-Star', m.earned ? 'Yes' : 'No']).concat(
+                            mods4Star.map(m => [m.item_name, '4-Star', m.earned ? 'Yes' : 'No'])
                         )
                     )
                 )
@@ -717,65 +961,48 @@
             const modsSheet = XLSX.utils.aoa_to_sheet(modsData);
             XLSX.utils.book_append_sheet(wb, modsSheet, 'Mods');
 
-            // Summary sheet
-            const equipmentEarned = equipment.filter(i => i.earned).length;
-            const titlesEarned = [...playerTitles, ...campTitles].filter(i => i.earned).length;
-            const modsEarned = [...mods1Star, ...mods2Star, ...mods3Star, ...mods4Star].filter(i => i.earned).length;
-            const totalEarned = equipmentEarned + titlesEarned + modsEarned;
-
-            const summaryData = [
-                ['Category', 'Earned', 'Total', 'Percentage'],
-                ['Equipment', equipmentEarned, equipment.length, equipment.length > 0 ? ((equipmentEarned / equipment.length) * 100).toFixed(1) + '%' : '0%'],
-                ['Titles', titlesEarned, playerTitles.length + campTitles.length, (playerTitles.length + campTitles.length) > 0 ? ((titlesEarned / (playerTitles.length + campTitles.length)) * 100).toFixed(1) + '%' : '0%'],
-                ['Mods', modsEarned, mods1Star.length + mods2Star.length + mods3Star.length + mods4Star.length, (mods1Star.length + mods2Star.length + mods3Star.length + mods4Star.length) > 0 ? ((modsEarned / (mods1Star.length + mods2Star.length + mods3Star.length + mods4Star.length)) * 100).toFixed(1) + '%' : '0%'],
-                ['TOTAL', totalEarned, equipment.length + playerTitles.length + campTitles.length + mods1Star.length + mods2Star.length + mods3Star.length + mods4Star.length, '']
-            ];
-            const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
-            XLSX.utils.book_append_sheet(wb, summarySheet, 'Summary');
-
             XLSX.writeFile(wb, 'Fallout76_Tracker_' + new Date().toISOString().slice(0, 10) + '.xlsx');
             closeExportModal();
         }
 
-        function exportToCSV() {
-            const equipment = getItems(STORAGE_KEYS.equipment);
-            const playerTitles = getItems(STORAGE_KEYS.playerTitles);
-            const campTitles = getItems(STORAGE_KEYS.campTitles);
-            const mods1Star = getItems(STORAGE_KEYS.mods1Star);
-            const mods2Star = getItems(STORAGE_KEYS.mods2Star);
-            const mods3Star = getItems(STORAGE_KEYS.mods3Star);
-            const mods4Star = getItems(STORAGE_KEYS.mods4Star);
+        async function exportToCSV() {
+            const equipment = await getItems('equipment');
+            const playerTitles = await getItems('titles', 'player');
+            const campTitles = await getItems('titles', 'camp');
+            const mods1Star = await getItems('mods', '1-Star');
+            const mods2Star = await getItems('mods', '2-Star');
+            const mods3Star = await getItems('mods', '3-Star');
+            const mods4Star = await getItems('mods', '4-Star');
 
             let csv = 'Fallout 76 Rare Items Tracker Export\n\n';
-
             csv += 'EQUIPMENT\n';
             csv += 'Item,Earned\n';
             equipment.forEach(e => {
-                csv += `"${e.name}","${e.earned ? 'Yes' : 'No'}"\n`;
+                csv += `"${e.item_name}","${e.earned ? 'Yes' : 'No'}"\n`;
             });
 
             csv += '\n\nTITLES\n';
             csv += 'Item,Type,Earned\n';
             playerTitles.forEach(t => {
-                csv += `"${t.name}","Player","${t.earned ? 'Yes' : 'No'}"\n`;
+                csv += `"${t.item_name}","Player","${t.earned ? 'Yes' : 'No'}"\n`;
             });
             campTitles.forEach(t => {
-                csv += `"${t.name}","Camp","${t.earned ? 'Yes' : 'No'}"\n`;
+                csv += `"${t.item_name}","Camp","${t.earned ? 'Yes' : 'No'}"\n`;
             });
 
             csv += '\n\nMODS\n';
             csv += 'Item,Rarity,Earned\n';
             mods1Star.forEach(m => {
-                csv += `"${m.name}","1-Star","${m.earned ? 'Yes' : 'No'}"\n`;
+                csv += `"${m.item_name}","1-Star","${m.earned ? 'Yes' : 'No'}"\n`;
             });
             mods2Star.forEach(m => {
-                csv += `"${m.name}","2-Star","${m.earned ? 'Yes' : 'No'}"\n`;
+                csv += `"${m.item_name}","2-Star","${m.earned ? 'Yes' : 'No'}"\n`;
             });
             mods3Star.forEach(m => {
-                csv += `"${m.name}","3-Star","${m.earned ? 'Yes' : 'No'}"\n`;
+                csv += `"${m.item_name}","3-Star","${m.earned ? 'Yes' : 'No'}"\n`;
             });
             mods4Star.forEach(m => {
-                csv += `"${m.name}","4-Star","${m.earned ? 'Yes' : 'No'}"\n`;
+                csv += `"${m.item_name}","4-Star","${m.earned ? 'Yes' : 'No'}"\n`;
             });
 
             const element = document.createElement('a');
@@ -788,7 +1015,6 @@
             closeExportModal();
         }
 
-        // Close modal if clicking outside
         window.onclick = function(event) {
             const modal = document.getElementById('exportModal');
             if (event.target === modal) {
@@ -796,9 +1022,8 @@
             }
         }
 
-        // Initialize on load
-        initializeDefaults();
-        render();
+        // Initialize - show auth screen
+        showAuthUI();
     </script>
 </body>
 </html>
