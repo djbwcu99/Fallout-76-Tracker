@@ -496,6 +496,73 @@
         .hidden {
             display: none;
         }
+
+        .leaderboard-section {
+            background: rgba(0, 40, 0, 0.7);
+            border: 2px solid #00ff41;
+            padding: 20px;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .leaderboard-section h2 {
+            color: #00ff41;
+            margin-bottom: 15px;
+            font-size: 16px;
+            border-bottom: 2px solid #00ff41;
+            padding-bottom: 10px;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(0, 255, 65, 0.6);
+        }
+
+        .user-card {
+            background: rgba(0, 50, 0, 0.8);
+            border: 2px solid #00aa20;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-card:hover {
+            background: rgba(0, 80, 0, 0.9);
+            border-color: #00ff41;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+        }
+
+        .user-card-name {
+            color: #00ff41;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .user-card-stats {
+            color: #00aa20;
+            font-size: 12px;
+            text-align: right;
+        }
+
+        .view-btn {
+            padding: 8px 12px;
+            background: #00aa20;
+            border: 2px solid #00ff41;
+            color: #000;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            font-weight: bold;
+            font-size: 11px;
+            transition: all 0.2s;
+            margin-left: 10px;
+        }
+
+        .view-btn:hover {
+            background: #00ff41;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.6);
+        }
     </style>
 </head>
 <body>
@@ -523,6 +590,14 @@
             <div class="auth-info">
                 Logged in as: <strong id="currentUsername"></strong>
                 <button class="logout-btn" onclick="logout()" style="margin-left: 10px;">Logout</button>
+            </div>
+        </div>
+
+        <!-- User Leaderboard -->
+        <div id="leaderboardContainer" class="hidden">
+            <div class="leaderboard-section">
+                <h2>📊 Player Progress</h2>
+                <div id="leaderboard"></div>
             </div>
         </div>
 
@@ -748,6 +823,46 @@
             renderUserTabs();
         }
 
+        async function renderLeaderboard() {
+            const container = document.getElementById('leaderboard');
+            const userStats = [];
+
+            for (const user of allUsers) {
+                const items = await getItems('equipment', null, user.id);
+                const playerTitles = await getItems('titles', 'player', user.id);
+                const campTitles = await getItems('titles', 'camp', user.id);
+                const mods = await getItems('mods', null, user.id);
+
+                const totalItems = items.length + playerTitles.length + campTitles.length + mods.length;
+                const earnedItems =
+                    items.filter(i => i.earned).length +
+                    playerTitles.filter(i => i.earned).length +
+                    campTitles.filter(i => i.earned).length +
+                    mods.filter(i => i.earned).length;
+
+                userStats.push({
+                    username: user.username,
+                    id: user.id,
+                    earned: earnedItems,
+                    total: totalItems,
+                    percent: totalItems > 0 ? Math.round((earnedItems / totalItems) * 100) : 0
+                });
+            }
+
+            // Sort by earned count descending
+            userStats.sort((a, b) => b.earned - a.earned);
+
+            container.innerHTML = userStats.map(user => `
+                <div class="user-card">
+                    <div>
+                        <div class="user-card-name">${user.username}</div>
+                        <div class="user-card-stats">${user.earned}/${user.total} items (${user.percent}%)</div>
+                    </div>
+                    <button class="view-btn" onclick="switchUser('${user.id}')">View</button>
+                </div>
+            `).join('');
+        }
+
         function renderUserTabs() {
             const container = document.getElementById('userTabs');
             container.innerHTML = allUsers.map(user => `
@@ -767,6 +882,7 @@
         function showAuthUI() {
             document.getElementById('authPanel').classList.remove('hidden');
             document.getElementById('loggedInPanel').classList.add('hidden');
+            document.getElementById('leaderboardContainer').classList.add('hidden');
             document.getElementById('userTabsContainer').classList.add('hidden');
             document.getElementById('sections').classList.add('hidden');
             document.getElementById('stats').classList.add('hidden');
@@ -775,6 +891,7 @@
         function showTrackerUI() {
             document.getElementById('authPanel').classList.add('hidden');
             document.getElementById('loggedInPanel').classList.remove('hidden');
+            document.getElementById('leaderboardContainer').classList.remove('hidden');
             document.getElementById('userTabsContainer').classList.remove('hidden');
             document.getElementById('sections').classList.remove('hidden');
             document.getElementById('stats').classList.remove('hidden');
@@ -782,9 +899,10 @@
             render();
         }
 
-        async function getItems(category, rarity = null) {
+        async function getItems(category, rarity = null, userId = null) {
             try {
-                let endpoint = `/tracker_items?user_id=eq.${currentViewingUserId}&category=eq.${encodeURIComponent(category)}`;
+                const useId = userId || currentViewingUserId;
+                let endpoint = `/tracker_items?user_id=eq.${useId}&category=eq.${encodeURIComponent(category)}`;
                 if (rarity) endpoint += `&rarity=eq.${encodeURIComponent(rarity)}`;
                 return await apiCall(endpoint);
             } catch (error) {
@@ -926,6 +1044,7 @@
             await renderList('mods3StarList', 'mods', '3-Star');
             await renderList('mods4StarList', 'mods', '4-Star');
             await updateStats();
+            await renderLeaderboard();
         }
 
         async function resetAll() {
