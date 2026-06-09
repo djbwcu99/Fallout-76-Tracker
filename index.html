@@ -864,12 +864,13 @@
             try {
                 // Get all registered users
                 const users = await apiCall('/users');
+                console.log('Raw users from API:', users);
                 allUsers = users.map(u => ({ username: u.username, id: u.username }));
                 // Add current user if not already in list
                 if (!allUsers.find(u => u.id === currentViewingUserId)) {
                     allUsers.unshift({ username: currentUser.username, id: currentViewingUserId });
                 }
-                console.log('Loaded users:', allUsers);
+                console.log('Final loaded users:', allUsers);
             } catch (error) {
                 console.error('Error loading users:', error);
                 allUsers = [{ username: currentUser.username, id: currentViewingUserId }];
@@ -984,9 +985,18 @@
         async function getItems(category, rarity = null, userId = null) {
             try {
                 const useId = userId || currentViewingUserId;
-                let endpoint = `/tracker_items?user_id=eq.${useId}&category=eq.${encodeURIComponent(category)}`;
+                let endpoint = `/tracker_items?category=eq.${encodeURIComponent(category)}`;
                 if (rarity) endpoint += `&rarity=eq.${encodeURIComponent(rarity)}`;
-                return await apiCall(endpoint);
+
+                // Get items: admin items + user's own items
+                const allItems = await apiCall(endpoint);
+
+                // Filter to show: items created by admin OR items belonging to current user
+                const userItems = allItems.filter(item =>
+                    item.user_id === useId || item.user_id === ADMIN_USER
+                );
+
+                return userItems;
             } catch (error) {
                 console.error('Error getting items:', error);
                 return [];
