@@ -563,6 +563,23 @@
             background: #00ff41;
             box-shadow: 0 0 10px rgba(0, 255, 65, 0.6);
         }
+
+        .admin-only {
+            display: block;
+        }
+
+        .admin-only.hidden {
+            display: none;
+        }
+
+        .admin-badge {
+            color: #00ff41;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 10px;
+            padding: 2px 6px;
+            border: 1px solid #00ff41;
+        }
     </style>
 </head>
 <body>
@@ -623,7 +640,7 @@
             <div class="section">
                 <h2>Equipment</h2>
                 <div class="item-list" id="equipmentList"></div>
-                <div class="add-item">
+                <div class="add-item admin-only" id="equipmentAddSection">
                     <input type="text" id="equipmentInput" placeholder="Add new equipment...">
                     <button onclick="addEquipment()">Add</button>
                 </div>
@@ -636,7 +653,7 @@
                 <div class="subsection">
                     <h3>Player Titles</h3>
                     <div class="item-list" id="playerTitlesList"></div>
-                    <div class="add-item">
+                    <div class="add-item admin-only" id="playerTitlesAddSection">
                         <input type="text" id="playerTitlesInput" placeholder="Add player title...">
                         <button onclick="addPlayerTitle()">Add</button>
                     </div>
@@ -645,7 +662,7 @@
                 <div class="subsection">
                     <h3>Camp Titles</h3>
                     <div class="item-list" id="campTitlesList"></div>
-                    <div class="add-item">
+                    <div class="add-item admin-only" id="campTitlesAddSection">
                         <input type="text" id="campTitlesInput" placeholder="Add camp title...">
                         <button onclick="addCampTitle()">Add</button>
                     </div>
@@ -660,7 +677,7 @@
             <div class="subsection">
                 <h3>1-Star Mods</h3>
                 <div class="item-list" id="mods1StarList"></div>
-                <div class="add-item">
+                <div class="add-item admin-only" id="mods1StarAddSection">
                     <input type="text" id="mods1StarInput" placeholder="Add 1-star mod...">
                     <button onclick="addMod1Star()">Add</button>
                 </div>
@@ -669,7 +686,7 @@
             <div class="subsection">
                 <h3>2-Star Mods</h3>
                 <div class="item-list" id="mods2StarList"></div>
-                <div class="add-item">
+                <div class="add-item admin-only" id="mods2StarAddSection">
                     <input type="text" id="mods2StarInput" placeholder="Add 2-star mod...">
                     <button onclick="addMod2Star()">Add</button>
                 </div>
@@ -678,7 +695,7 @@
             <div class="subsection">
                 <h3>3-Star Mods</h3>
                 <div class="item-list" id="mods3StarList"></div>
-                <div class="add-item">
+                <div class="add-item admin-only" id="mods3StarAddSection">
                     <input type="text" id="mods3StarInput" placeholder="Add 3-star mod...">
                     <button onclick="addMod3Star()">Add</button>
                 </div>
@@ -687,7 +704,7 @@
             <div class="subsection">
                 <h3>4-Star Mods</h3>
                 <div class="item-list" id="mods4StarList"></div>
-                <div class="add-item">
+                <div class="add-item admin-only" id="mods4StarAddSection">
                     <input type="text" id="mods4StarInput" placeholder="Add 4-star mod...">
                     <button onclick="addMod4Star()">Add</button>
                 </div>
@@ -724,9 +741,15 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmdXRjZGRyZ3NxdHNmbnh6aHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMTAyOTQsImV4cCI6MjA5NjU4NjI5NH0.6c9sa0R24-bgZjtgGi8TkhL-ydwQuP3ijQuFAtdk7go';
         const API_URL = SUPABASE_URL + '/rest/v1';
 
+        const ADMIN_USER = 'Reddalewcu';
+
         let currentUser = null;
         let currentViewingUserId = null;
         let allUsers = [];
+
+        function isAdmin() {
+            return currentUser && currentUser.username === ADMIN_USER;
+        }
 
         // Helper function for API calls
         async function apiCall(endpoint, method = 'GET', body = null) {
@@ -876,6 +899,7 @@
         function switchUser(userId) {
             currentViewingUserId = userId;
             renderUserTabs();
+            updateAdminVisibility();
             render();
         }
 
@@ -888,6 +912,17 @@
             document.getElementById('stats').classList.add('hidden');
         }
 
+        function updateAdminVisibility() {
+            const adminSections = document.querySelectorAll('.admin-only');
+            adminSections.forEach(section => {
+                if (isAdmin()) {
+                    section.classList.remove('hidden');
+                } else {
+                    section.classList.add('hidden');
+                }
+            });
+        }
+
         function showTrackerUI() {
             document.getElementById('authPanel').classList.add('hidden');
             document.getElementById('loggedInPanel').classList.remove('hidden');
@@ -895,7 +930,9 @@
             document.getElementById('userTabsContainer').classList.remove('hidden');
             document.getElementById('sections').classList.remove('hidden');
             document.getElementById('stats').classList.remove('hidden');
-            document.getElementById('currentUsername').textContent = currentUser.username;
+            const username = currentUser.username + (isAdmin() ? ' [ADMIN]' : '');
+            document.getElementById('currentUsername').textContent = username;
+            updateAdminVisibility();
             render();
         }
 
@@ -1009,7 +1046,7 @@
                     <input type="checkbox" ${item.earned ? 'checked' : ''}
                            onchange="toggleItem('${item.id}', ${item.earned})">
                     <label>${item.item_name}</label>
-                    <button class="delete-btn" onclick="deleteItem('${item.id})">×</button>
+                    ${isAdmin() ? `<button class="delete-btn" onclick="deleteItem('${item.id}')">×</button>` : ''}
                 </div>
             `).join('');
         }
