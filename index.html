@@ -851,37 +851,51 @@
             const userStats = [];
 
             for (const user of allUsers) {
-                const items = await getItems('equipment', null, user.id);
+                const equipment = await getItems('equipment', null, user.id);
                 const playerTitles = await getItems('titles', 'player', user.id);
                 const campTitles = await getItems('titles', 'camp', user.id);
-                const mods = await getItems('mods', null, user.id);
-
-                const totalItems = items.length + playerTitles.length + campTitles.length + mods.length;
-                const earnedItems =
-                    items.filter(i => i.earned).length +
-                    playerTitles.filter(i => i.earned).length +
-                    campTitles.filter(i => i.earned).length +
-                    mods.filter(i => i.earned).length;
+                const mods1Star = await getItems('mods', '1-Star', user.id);
+                const mods2Star = await getItems('mods', '2-Star', user.id);
+                const mods3Star = await getItems('mods', '3-Star', user.id);
+                const mods4Star = await getItems('mods', '4-Star', user.id);
 
                 userStats.push({
                     username: user.username,
                     id: user.id,
-                    earned: earnedItems,
-                    total: totalItems,
-                    percent: totalItems > 0 ? Math.round((earnedItems / totalItems) * 100) : 0
+                    equipment: { earned: equipment.filter(i => i.earned).length, total: equipment.length },
+                    playerTitles: { earned: playerTitles.filter(i => i.earned).length, total: playerTitles.length },
+                    campTitles: { earned: campTitles.filter(i => i.earned).length, total: campTitles.length },
+                    mods1Star: { earned: mods1Star.filter(i => i.earned).length, total: mods1Star.length },
+                    mods2Star: { earned: mods2Star.filter(i => i.earned).length, total: mods2Star.length },
+                    mods3Star: { earned: mods3Star.filter(i => i.earned).length, total: mods3Star.length },
+                    mods4Star: { earned: mods4Star.filter(i => i.earned).length, total: mods4Star.length }
                 });
             }
 
-            // Sort by earned count descending
-            userStats.sort((a, b) => b.earned - a.earned);
+            // Sort by total earned descending
+            userStats.sort((a, b) => {
+                const aTotal = a.equipment.earned + a.playerTitles.earned + a.campTitles.earned +
+                               a.mods1Star.earned + a.mods2Star.earned + a.mods3Star.earned + a.mods4Star.earned;
+                const bTotal = b.equipment.earned + b.playerTitles.earned + b.campTitles.earned +
+                               b.mods1Star.earned + b.mods2Star.earned + b.mods3Star.earned + b.mods4Star.earned;
+                return bTotal - aTotal;
+            });
 
             container.innerHTML = userStats.map(user => `
-                <div class="user-card">
-                    <div>
+                <div class="user-card" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+                    <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
                         <div class="user-card-name">${user.username}</div>
-                        <div class="user-card-stats">${user.earned}/${user.total} items (${user.percent}%)</div>
+                        <button class="view-btn" onclick="switchUser('${user.id}')">View</button>
                     </div>
-                    <button class="view-btn" onclick="switchUser('${user.id}')">View</button>
+                    <div style="width: 100%; color: #00aa20; font-size: 11px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; line-height: 1.4;">
+                        <div>Equipment: ${user.equipment.earned}/${user.equipment.total}</div>
+                        <div>Player Titles: ${user.playerTitles.earned}/${user.playerTitles.total}</div>
+                        <div>Camp Titles: ${user.campTitles.earned}/${user.campTitles.total}</div>
+                        <div>1-Star Mods: ${user.mods1Star.earned}/${user.mods1Star.total}</div>
+                        <div>2-Star Mods: ${user.mods2Star.earned}/${user.mods2Star.total}</div>
+                        <div>3-Star Mods: ${user.mods3Star.earned}/${user.mods3Star.total}</div>
+                        <div>4-Star Mods: ${user.mods4Star.earned}/${user.mods4Star.total}</div>
+                    </div>
                 </div>
             `).join('');
         }
