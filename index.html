@@ -785,7 +785,7 @@
         }
 
         // Authentication (simplified - no server-side storage needed)
-        function signup() {
+        async function signup() {
             const username = document.getElementById('username').value.trim();
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value.trim();
@@ -795,29 +795,45 @@
                 return;
             }
 
-            // Save to localStorage
-            localStorage.setItem('fo76_username', username);
-            currentUser = { username, id: username };
-            currentViewingUserId = username;
-            loadAllUsers();
-            showTrackerUI();
-            document.getElementById('username').value = '';
-            document.getElementById('email').value = '';
-            document.getElementById('password').value = '';
-        }
-
-        function login() {
-            const username = document.getElementById('username').value.trim();
-            if (!username) {
-                alert('Please enter username');
-                return;
+            try {
+                // Register user in database
+                await apiCall('/users', 'POST', { username, email });
+            } catch (error) {
+                // User might already exist, that's ok
+                console.log('User registration note:', error.message);
             }
 
             // Save to localStorage
             localStorage.setItem('fo76_username', username);
             currentUser = { username, id: username };
             currentViewingUserId = username;
-            loadAllUsers();
+            await loadAllUsers();
+            showTrackerUI();
+            document.getElementById('username').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        async function login() {
+            const username = document.getElementById('username').value.trim();
+            if (!username) {
+                alert('Please enter username');
+                return;
+            }
+
+            try {
+                // Register/update user in database
+                await apiCall('/users', 'POST', { username, email: '' });
+            } catch (error) {
+                // User might already exist, that's ok
+                console.log('User login note:', error.message);
+            }
+
+            // Save to localStorage
+            localStorage.setItem('fo76_username', username);
+            currentUser = { username, id: username };
+            currentViewingUserId = username;
+            await loadAllUsers();
             showTrackerUI();
         }
 
@@ -831,12 +847,12 @@
             document.getElementById('password').value = '';
         }
 
-        function checkExistingSession() {
+        async function checkExistingSession() {
             const savedUsername = localStorage.getItem('fo76_username');
             if (savedUsername) {
                 currentUser = { username: savedUsername, id: savedUsername };
                 currentViewingUserId = savedUsername;
-                loadAllUsers();
+                await loadAllUsers();
                 showTrackerUI();
             } else {
                 showAuthUI();
@@ -846,14 +862,14 @@
 
         async function loadAllUsers() {
             try {
-                // Get all tracker items to find unique usernames
-                const items = await apiCall('/tracker_items?select=user_id');
-                const uniqueUsernames = [...new Set(items.map(i => i.user_id))];
-                allUsers = uniqueUsernames.map(username => ({ username, id: username }));
+                // Get all registered users
+                const users = await apiCall('/users');
+                allUsers = users.map(u => ({ username: u.username, id: u.username }));
                 // Add current user if not already in list
                 if (!allUsers.find(u => u.id === currentViewingUserId)) {
                     allUsers.unshift({ username: currentUser.username, id: currentViewingUserId });
                 }
+                console.log('Loaded users:', allUsers);
             } catch (error) {
                 console.error('Error loading users:', error);
                 allUsers = [{ username: currentUser.username, id: currentViewingUserId }];
