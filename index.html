@@ -686,46 +686,40 @@
             }
         }
 
-        // Authentication
-        async function signup() {
+        // Authentication (simplified - no server-side storage needed)
+        function signup() {
             const username = document.getElementById('username').value.trim();
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value.trim();
 
-            if (!username || !email || !password) {
-                alert('Please fill all fields');
+            if (!username) {
+                alert('Please enter a username');
                 return;
             }
 
-            try {
-                const result = await apiCall('/users', 'POST', { username, email });
-                alert('Account created! Now login.');
-                document.getElementById('username').value = '';
-                document.getElementById('email').value = '';
-                document.getElementById('password').value = '';
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
+            // Just save to localStorage - username is all we need
+            localStorage.setItem('fo76_username', username);
+            currentUser = { username, id: username };
+            currentViewingUserId = username;
+            loadAllUsers();
+            showTrackerUI();
+            document.getElementById('username').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
         }
 
-        async function login() {
+        function login() {
             const username = document.getElementById('username').value.trim();
             if (!username) {
                 alert('Please enter username');
                 return;
             }
 
-            try {
-                const result = await apiCall('/users?username=eq.' + encodeURIComponent(username));
-                if (!result || result.length === 0) throw new Error('User not found');
-
-                currentUser = result[0];
-                currentViewingUserId = result[0].id;
-                await loadAllUsers();
-                showTrackerUI();
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
+            // Just load from username
+            currentUser = { username, id: username };
+            currentViewingUserId = username;
+            loadAllUsers();
+            showTrackerUI();
         }
 
         function logout() {
@@ -739,10 +733,17 @@
 
         async function loadAllUsers() {
             try {
-                allUsers = await apiCall('/users');
+                // Get all tracker items to find unique usernames
+                const items = await apiCall('/tracker_items?select=user_id');
+                const uniqueUsernames = [...new Set(items.map(i => i.user_id))];
+                allUsers = uniqueUsernames.map(username => ({ username, id: username }));
+                // Add current user if not already in list
+                if (!allUsers.find(u => u.id === currentViewingUserId)) {
+                    allUsers.unshift({ username: currentUser.username, id: currentViewingUserId });
+                }
             } catch (error) {
                 console.error('Error loading users:', error);
-                allUsers = [];
+                allUsers = [{ username: currentUser.username, id: currentViewingUserId }];
             }
             renderUserTabs();
         }
