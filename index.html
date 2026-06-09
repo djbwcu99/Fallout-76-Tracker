@@ -988,16 +988,33 @@
                 let endpoint = `/tracker_items?category=eq.${encodeURIComponent(category)}`;
                 if (rarity) endpoint += `&rarity=eq.${encodeURIComponent(rarity)}`;
 
-                // Get items: admin items + user's own items
+                // Get all items in this category
                 const allItems = await apiCall(endpoint);
-                console.log(`Getting items for ${useId}, category: ${category}, all items:`, allItems);
 
-                // Filter to show: items created by admin OR items belonging to current user
-                const userItems = allItems.filter(item =>
-                    item.user_id === useId || item.user_id === ADMIN_USER
-                );
+                // Process items
+                const userItems = [];
+                const seenItemNames = new Set();
 
-                console.log(`Filtered items for ${useId}:`, userItems);
+                // First, add user's own items
+                const ownItems = allItems.filter(item => item.user_id === useId);
+                ownItems.forEach(item => {
+                    userItems.push(item);
+                    seenItemNames.add(item.item_name);
+                });
+
+                // Then, add admin items that the user doesn't have (show as unchecked)
+                const adminItems = allItems.filter(item => item.user_id === ADMIN_USER);
+                adminItems.forEach(item => {
+                    if (!seenItemNames.has(item.item_name)) {
+                        // Create a copy of the admin item but marked as unchecked for this user
+                        userItems.push({
+                            ...item,
+                            earned: false,
+                            user_id: useId // Mark it as belonging to this user
+                        });
+                    }
+                });
+
                 return userItems;
             } catch (error) {
                 console.error('Error getting items:', error);
@@ -1022,7 +1039,26 @@
 
         async function toggleItem(itemId, earned) {
             try {
-                await apiCall(`/tracker_items?id=eq.${itemId}`, 'PATCH', { earned: !earned });
+                // Get the item to check if it's an admin item
+                const item = await apiCall(`/tracker_items?id=eq.${itemId}`);
+                if (!item || item.length === 0) return;
+
+                const itemData = item[0];
+
+                // If this is an admin item and user is not admin, create a copy for them
+                if (itemData.user_id === ADMIN_USER && !isAdmin()) {
+                    // Create new item for this user
+                    await apiCall('/tracker_items', 'POST', {
+                        user_id: currentViewingUserId,
+                        category: itemData.category,
+                        item_name: itemData.item_name,
+                        rarity: itemData.rarity,
+                        earned: !earned
+                    });
+                } else {
+                    // Update existing item
+                    await apiCall(`/tracker_items?id=eq.${itemId}`, 'PATCH', { earned: !earned });
+                }
                 render();
             } catch (error) {
                 alert('Error updating item: ' + error.message);
