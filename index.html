@@ -990,12 +990,14 @@
 
                 // Get items: admin items + user's own items
                 const allItems = await apiCall(endpoint);
+                console.log(`Getting items for ${useId}, category: ${category}, all items:`, allItems);
 
                 // Filter to show: items created by admin OR items belonging to current user
                 const userItems = allItems.filter(item =>
                     item.user_id === useId || item.user_id === ADMIN_USER
                 );
 
+                console.log(`Filtered items for ${useId}:`, userItems);
                 return userItems;
             } catch (error) {
                 console.error('Error getting items:', error);
