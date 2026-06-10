@@ -765,28 +765,6 @@
             </div>
         </div>
 
-        <!-- Stats Section -->
-        <div id="stats" class="stats hidden">
-            <div class="stats-grid">
-                <div class="stat-box">
-                    <div class="stat-number" id="equipmentEarned">0</div>
-                    <div class="stat-label">Equipment Earned</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-number" id="titlesEarned">0</div>
-                    <div class="stat-label">Titles Earned</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-number" id="modsEarned">0</div>
-                    <div class="stat-label">Mods Earned</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-number" id="totalEarned">0</div>
-                    <div class="stat-label">Total Earned</div>
-                </div>
-            </div>
-            <button class="reset-btn admin-only" id="resetBtn" onclick="resetAll()">Reset All Data</button>
-        </div>
     </div>
 
     <script>
@@ -1009,7 +987,6 @@
             document.getElementById('leaderboardContainer').classList.add('hidden');
             document.getElementById('userTabsContainer').classList.add('hidden');
             document.getElementById('sections').classList.add('hidden');
-            document.getElementById('stats').classList.add('hidden');
         }
 
         function updateAdminVisibility() {
@@ -1029,7 +1006,6 @@
             document.getElementById('leaderboardContainer').classList.remove('hidden');
             document.getElementById('userTabsContainer').classList.remove('hidden');
             document.getElementById('sections').classList.remove('hidden');
-            document.getElementById('stats').classList.remove('hidden');
             const username = currentUser.username + (isAdmin() ? ' [ADMIN]' : '');
             document.getElementById('currentUsername').textContent = username;
             updateAdminVisibility();
@@ -1279,7 +1255,6 @@
             await renderList('fasnachtMasksList', 'fasnacht', 'mask');
             await renderList('fasnachtGlowingMasksList', 'fasnacht', 'glowing-mask');
             await renderList('fasnachtGearList', 'fasnacht', 'gear');
-            await updateStats();
             await renderLeaderboard();
         }
 
