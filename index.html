@@ -636,40 +636,72 @@
         </div>
 
         <div id="sections" class="sections hidden">
-            <!-- Rare Apparel Section -->
-            <div class="section">
-                <h2>Rare Apparel</h2>
-                <div class="item-list" id="equipmentList"></div>
-                <div class="add-item admin-only" id="equipmentAddSection">
-                    <input type="text" id="equipmentInput" placeholder="Add rare apparel...">
-                    <button onclick="addEquipment()">Add</button>
+            <!-- Mods Acquired Section -->
+            <div class="section" style="margin-bottom: 30px;">
+                <h2>Mods Acquired</h2>
+
+                <div class="subsection">
+                    <h3>1-Star Mods</h3>
+                    <div class="item-list" id="mods1StarList"></div>
+                    <div class="add-item admin-only" id="mods1StarAddSection">
+                        <input type="text" id="mods1StarInput" placeholder="Add 1-star mod...">
+                        <button onclick="addMod1Star()">Add</button>
+                    </div>
+                </div>
+
+                <div class="subsection">
+                    <h3>2-Star Mods</h3>
+                    <div class="item-list" id="mods2StarList"></div>
+                    <div class="add-item admin-only" id="mods2StarAddSection">
+                        <input type="text" id="mods2StarInput" placeholder="Add 2-star mod...">
+                        <button onclick="addMod2Star()">Add</button>
+                    </div>
+                </div>
+
+                <div class="subsection">
+                    <h3>3-Star Mods</h3>
+                    <div class="item-list" id="mods3StarList"></div>
+                    <div class="add-item admin-only" id="mods3StarAddSection">
+                        <input type="text" id="mods3StarInput" placeholder="Add 3-star mod...">
+                        <button onclick="addMod3Star()">Add</button>
+                    </div>
+                </div>
+
+                <div class="subsection">
+                    <h3>4-Star Mods</h3>
+                    <div class="item-list" id="mods4StarList"></div>
+                    <div class="add-item admin-only" id="mods4StarAddSection">
+                        <input type="text" id="mods4StarInput" placeholder="Add 4-star mod...">
+                        <button onclick="addMod4Star()">Add</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Fasnacht Section -->
-            <div class="section" style="margin-bottom: 30px;">
-                <h2>Fasnacht</h2>
-
-                <div class="subsection">
-                    <h3>Plans</h3>
-                    <div class="item-list" id="fasnachtPlansList"></div>
-                    <div class="add-item admin-only" id="fasnachtPlansAddSection">
-                        <input type="text" id="fasnachtPlansInput" placeholder="Add plan...">
-                        <button onclick="addFasnachtPlan()">Add</button>
+            <!-- Titles Section - Two Columns -->
+            <div class="sections">
+                <div class="section">
+                    <h2>Player Titles</h2>
+                    <div class="item-list" id="playerTitlesList"></div>
+                    <div class="add-item admin-only" id="playerTitlesAddSection">
+                        <input type="text" id="playerTitlesInput" placeholder="Add player title...">
+                        <button onclick="addPlayerTitle()">Add</button>
                     </div>
                 </div>
 
-                <div class="subsection">
-                    <h3>Masks</h3>
-                    <div class="item-list" id="fasnachtMasksList"></div>
-                    <div class="add-item admin-only" id="fasnachtMasksAddSection">
-                        <input type="text" id="fasnachtMasksInput" placeholder="Add mask...">
-                        <button onclick="addFasnachtMask()">Add</button>
+                <div class="section">
+                    <h2>Camp Titles</h2>
+                    <div class="item-list" id="campTitlesList"></div>
+                    <div class="add-item admin-only" id="campTitlesAddSection">
+                        <input type="text" id="campTitlesInput" placeholder="Add camp title...">
+                        <button onclick="addCampTitle()">Add</button>
                     </div>
                 </div>
+            </div>
 
-                <div class="subsection">
-                    <h3>Glowing Masks</h3>
+            <!-- Fasnacht Section - Three Columns -->
+            <div class="sections" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 30px;">
+                <div class="section">
+                    <h2>Glowing Masks</h2>
                     <div class="item-list" id="fasnachtGlowingMasksList"></div>
                     <div class="add-item admin-only" id="fasnachtGlowingMasksAddSection">
                         <input type="text" id="fasnachtGlowingMasksInput" placeholder="Add glowing mask...">
@@ -677,8 +709,17 @@
                     </div>
                 </div>
 
-                <div class="subsection">
-                    <h3>Gear</h3>
+                <div class="section">
+                    <h2>Masks</h2>
+                    <div class="item-list" id="fasnachtMasksList"></div>
+                    <div class="add-item admin-only" id="fasnachtMasksAddSection">
+                        <input type="text" id="fasnachtMasksInput" placeholder="Add mask...">
+                        <button onclick="addFasnachtMask()">Add</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Gear</h2>
                     <div class="item-list" id="fasnachtGearList"></div>
                     <div class="add-item admin-only" id="fasnachtGearAddSection">
                         <input type="text" id="fasnachtGearInput" placeholder="Add gear...">
@@ -687,67 +728,13 @@
                 </div>
             </div>
 
-            <!-- Titles Section -->
+            <!-- Rare Apparel Section -->
             <div class="section">
-                <h2>Titles</h2>
-
-                <div class="subsection">
-                    <h3>Player Titles</h3>
-                    <div class="item-list" id="playerTitlesList"></div>
-                    <div class="add-item admin-only" id="playerTitlesAddSection">
-                        <input type="text" id="playerTitlesInput" placeholder="Add player title...">
-                        <button onclick="addPlayerTitle()">Add</button>
-                    </div>
-                </div>
-
-                <div class="subsection">
-                    <h3>Camp Titles</h3>
-                    <div class="item-list" id="campTitlesList"></div>
-                    <div class="add-item admin-only" id="campTitlesAddSection">
-                        <input type="text" id="campTitlesInput" placeholder="Add camp title...">
-                        <button onclick="addCampTitle()">Add</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Mods Section -->
-        <div class="section" style="margin-bottom: 30px;">
-            <h2>Mods Acquired</h2>
-
-            <div class="subsection">
-                <h3>1-Star Mods</h3>
-                <div class="item-list" id="mods1StarList"></div>
-                <div class="add-item admin-only" id="mods1StarAddSection">
-                    <input type="text" id="mods1StarInput" placeholder="Add 1-star mod...">
-                    <button onclick="addMod1Star()">Add</button>
-                </div>
-            </div>
-
-            <div class="subsection">
-                <h3>2-Star Mods</h3>
-                <div class="item-list" id="mods2StarList"></div>
-                <div class="add-item admin-only" id="mods2StarAddSection">
-                    <input type="text" id="mods2StarInput" placeholder="Add 2-star mod...">
-                    <button onclick="addMod2Star()">Add</button>
-                </div>
-            </div>
-
-            <div class="subsection">
-                <h3>3-Star Mods</h3>
-                <div class="item-list" id="mods3StarList"></div>
-                <div class="add-item admin-only" id="mods3StarAddSection">
-                    <input type="text" id="mods3StarInput" placeholder="Add 3-star mod...">
-                    <button onclick="addMod3Star()">Add</button>
-                </div>
-            </div>
-
-            <div class="subsection">
-                <h3>4-Star Mods</h3>
-                <div class="item-list" id="mods4StarList"></div>
-                <div class="add-item admin-only" id="mods4StarAddSection">
-                    <input type="text" id="mods4StarInput" placeholder="Add 4-star mod...">
-                    <button onclick="addMod4Star()">Add</button>
+                <h2>Rare Apparel</h2>
+                <div class="item-list" id="equipmentList"></div>
+                <div class="add-item admin-only" id="equipmentAddSection">
+                    <input type="text" id="equipmentInput" placeholder="Add rare apparel...">
+                    <button onclick="addEquipment()">Add</button>
                 </div>
             </div>
         </div>
@@ -1263,7 +1250,6 @@
             await renderList('mods2StarList', 'mods', '2-Star');
             await renderList('mods3StarList', 'mods', '3-Star');
             await renderList('mods4StarList', 'mods', '4-Star');
-            await renderList('fasnachtPlansList', 'fasnacht', 'plan');
             await renderList('fasnachtMasksList', 'fasnacht', 'mask');
             await renderList('fasnachtGlowingMasksList', 'fasnacht', 'glowing-mask');
             await renderList('fasnachtGearList', 'fasnacht', 'gear');
