@@ -1065,6 +1065,13 @@
 
         async function addItem(category, itemName, rarity = null) {
             try {
+                // Check for duplicates
+                const existingItems = await getItems(category, rarity);
+                if (existingItems.some(item => item.item_name.toLowerCase() === itemName.toLowerCase())) {
+                    alert('This item already exists!');
+                    return;
+                }
+
                 await apiCall('/tracker_items', 'POST', {
                     user_id: currentViewingUserId,
                     category,
@@ -1206,6 +1213,10 @@
 
         async function renderList(containerId, category, rarity = null) {
             const items = await getItems(category, rarity);
+
+            // Sort alphabetically by item_name
+            items.sort((a, b) => a.item_name.localeCompare(b.item_name));
+
             const container = document.getElementById(containerId);
             container.innerHTML = items.map(item => `
                 <div class="item">
