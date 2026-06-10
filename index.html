@@ -646,6 +646,47 @@
                 </div>
             </div>
 
+            <!-- Fasnacht Section -->
+            <div class="section" style="margin-bottom: 30px;">
+                <h2>Fasnacht</h2>
+
+                <div class="subsection">
+                    <h3>Plans</h3>
+                    <div class="item-list" id="fasnachtPlansList"></div>
+                    <div class="add-item admin-only" id="fasnachtPlansAddSection">
+                        <input type="text" id="fasnachtPlansInput" placeholder="Add plan...">
+                        <button onclick="addFasnachtPlan()">Add</button>
+                    </div>
+                </div>
+
+                <div class="subsection">
+                    <h3>Masks</h3>
+                    <div class="item-list" id="fasnachtMasksList"></div>
+                    <div class="add-item admin-only" id="fasnachtMasksAddSection">
+                        <input type="text" id="fasnachtMasksInput" placeholder="Add mask...">
+                        <button onclick="addFasnachtMask()">Add</button>
+                    </div>
+                </div>
+
+                <div class="subsection">
+                    <h3>Glowing Masks</h3>
+                    <div class="item-list" id="fasnachtGlowingMasksList"></div>
+                    <div class="add-item admin-only" id="fasnachtGlowingMasksAddSection">
+                        <input type="text" id="fasnachtGlowingMasksInput" placeholder="Add glowing mask...">
+                        <button onclick="addFasnachtGlowingMask()">Add</button>
+                    </div>
+                </div>
+
+                <div class="subsection">
+                    <h3>Gear</h3>
+                    <div class="item-list" id="fasnachtGearList"></div>
+                    <div class="add-item admin-only" id="fasnachtGearAddSection">
+                        <input type="text" id="fasnachtGearInput" placeholder="Add gear...">
+                        <button onclick="addFasnachtGear()">Add</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Titles Section -->
             <div class="section">
                 <h2>Titles</h2>
@@ -1083,6 +1124,38 @@
             }
         }
 
+        async function addFasnachtPlan() {
+            const input = document.getElementById('fasnachtPlansInput');
+            if (input.value.trim()) {
+                await addItem('fasnacht', input.value.trim(), 'plan');
+                input.value = '';
+            }
+        }
+
+        async function addFasnachtMask() {
+            const input = document.getElementById('fasnachtMasksInput');
+            if (input.value.trim()) {
+                await addItem('fasnacht', input.value.trim(), 'mask');
+                input.value = '';
+            }
+        }
+
+        async function addFasnachtGlowingMask() {
+            const input = document.getElementById('fasnachtGlowingMasksInput');
+            if (input.value.trim()) {
+                await addItem('fasnacht', input.value.trim(), 'glowing-mask');
+                input.value = '';
+            }
+        }
+
+        async function addFasnachtGear() {
+            const input = document.getElementById('fasnachtGearInput');
+            if (input.value.trim()) {
+                await addItem('fasnacht', input.value.trim(), 'gear');
+                input.value = '';
+            }
+        }
+
         async function addPlayerTitle() {
             const input = document.getElementById('playerTitlesInput');
             if (input.value.trim()) {
@@ -1152,11 +1225,16 @@
             const mods2Star = await getItems('mods', '2-Star');
             const mods3Star = await getItems('mods', '3-Star');
             const mods4Star = await getItems('mods', '4-Star');
+            const fasnachtPlans = await getItems('fasnacht', 'plan');
+            const fasnachtMasks = await getItems('fasnacht', 'mask');
+            const fasnachtGlowingMasks = await getItems('fasnacht', 'glowing-mask');
+            const fasnachtGear = await getItems('fasnacht', 'gear');
 
             const equipmentEarned = equipment.filter(i => i.earned).length;
             const titlesEarned = [...playerTitles, ...campTitles].filter(i => i.earned).length;
             const modsEarned = [...mods1Star, ...mods2Star, ...mods3Star, ...mods4Star].filter(i => i.earned).length;
-            const totalEarned = equipmentEarned + titlesEarned + modsEarned;
+            const fasnachtEarned = [...fasnachtPlans, ...fasnachtMasks, ...fasnachtGlowingMasks, ...fasnachtGear].filter(i => i.earned).length;
+            const totalEarned = equipmentEarned + titlesEarned + modsEarned + fasnachtEarned;
 
             document.getElementById('equipmentEarned').textContent = equipmentEarned;
             document.getElementById('titlesEarned').textContent = titlesEarned;
@@ -1174,6 +1252,10 @@
             await renderList('mods2StarList', 'mods', '2-Star');
             await renderList('mods3StarList', 'mods', '3-Star');
             await renderList('mods4StarList', 'mods', '4-Star');
+            await renderList('fasnachtPlansList', 'fasnacht', 'plan');
+            await renderList('fasnachtMasksList', 'fasnacht', 'mask');
+            await renderList('fasnachtGlowingMasksList', 'fasnacht', 'glowing-mask');
+            await renderList('fasnachtGearList', 'fasnacht', 'gear');
             await updateStats();
             await renderLeaderboard();
         }
