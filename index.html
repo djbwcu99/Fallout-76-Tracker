@@ -663,7 +663,7 @@
 <body>
     <div class="container">
         <div class="header-controls">
-            <h1>⚛️ Fallout 76 Rare Items Tracker</h1>
+            <h1>⚛️ Fallout 76 Group Items Tracker</h1>
             <button class="export-btn" onclick="openExportModal()">📊 Export</button>
         </div>
         <p class="subtitle">Track your equipment and titles earned</p>
@@ -1591,7 +1591,7 @@
             const mods3Star = await getItems('mods', '3-Star');
             const mods4Star = await getItems('mods', '4-Star');
 
-            let csv = 'Fallout 76 Rare Items Tracker Export\n\n';
+            let csv = 'Fallout 76 Group Items Tracker Export\n\n';
             csv += 'EQUIPMENT\n';
             csv += 'Item,Earned\n';
             equipment.forEach(e => {
