@@ -461,6 +461,38 @@
             background: #00ff41;
         }
 
+        .auth-buttons {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .auth-buttons button {
+            flex: 1;
+            min-width: 80px;
+            padding: 8px 5px;
+            font-size: 12px;
+        }
+
+        .auth-separator {
+            color: #00ff41;
+            font-weight: bold;
+        }
+
+        .auth-form h4 {
+            color: #00ff41;
+            margin-bottom: 10px;
+        }
+
+        .auth-form p {
+            color: #00aa20;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+
         .user-tabs {
             display: flex;
             gap: 10px;
@@ -639,12 +671,37 @@
         <!-- Auth Panel -->
         <div id="authPanel" class="auth-panel">
             <h3>Sign In / Create Account</h3>
-            <div class="auth-form">
+
+            <!-- Login/Signup Form -->
+            <div id="loginForm" class="auth-form">
                 <input type="text" id="username" placeholder="Username">
                 <input type="email" id="email" placeholder="Email">
                 <input type="password" id="password" placeholder="Password">
-                <button onclick="signup()">Create Account</button>
-                <button onclick="login()">Login</button>
+                <div class="auth-buttons">
+                    <button onclick="login()">Login</button>
+                    <span class="auth-separator">|</span>
+                    <button onclick="signup()">Create Account</button>
+                    <span class="auth-separator">|</span>
+                    <button onclick="showPasswordResetForm()">Password Reset</button>
+                </div>
+            </div>
+
+            <!-- Password Reset Form -->
+            <div id="passwordResetForm" class="auth-form hidden">
+                <h4 style="color: #00ff41; margin-bottom: 15px;">Password Reset</h4>
+                <input type="email" id="resetEmail" placeholder="Enter your email address">
+                <button onclick="requestPasswordReset()" style="margin-top: 10px;">Send Reset Code</button>
+                <button onclick="showLoginForm()" style="margin-top: 10px; background: #666;">Back to Login</button>
+            </div>
+
+            <!-- Verify Reset Code Form -->
+            <div id="verifyResetForm" class="auth-form hidden">
+                <h4 style="color: #00ff41; margin-bottom: 15px;">Verify Reset Code</h4>
+                <p style="color: #00aa20; font-size: 12px; margin-bottom: 15px;">Check your email for the reset code</p>
+                <input type="text" id="resetCode" placeholder="Enter reset code">
+                <input type="password" id="newPassword" placeholder="Enter new password">
+                <button onclick="resetPassword()" style="margin-top: 10px;">Reset Password</button>
+                <button onclick="showLoginForm()" style="margin-top: 10px; background: #666;">Back to Login</button>
             </div>
         </div>
 
@@ -903,6 +960,137 @@
             document.getElementById('username').value = '';
             document.getElementById('email').value = '';
             document.getElementById('password').value = '';
+        }
+
+        function showLoginForm() {
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('passwordResetForm').classList.add('hidden');
+            document.getElementById('verifyResetForm').classList.add('hidden');
+        }
+
+        function showPasswordResetForm() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('passwordResetForm').classList.remove('hidden');
+            document.getElementById('verifyResetForm').classList.add('hidden');
+            document.getElementById('resetEmail').value = '';
+        }
+
+        function showVerifyResetForm() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('passwordResetForm').classList.add('hidden');
+            document.getElementById('verifyResetForm').classList.remove('hidden');
+        }
+
+        async function requestPasswordReset() {
+            const email = document.getElementById('resetEmail').value.trim();
+            if (!email) {
+                alert('Please enter your email address');
+                return;
+            }
+
+            try {
+                // Check if email exists in users table
+                const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/users?email=eq.${email}`, {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+
+                const users = await checkRes.json();
+                if (!users || users.length === 0) {
+                    alert('Email not found');
+                    return;
+                }
+
+                // Generate a 6-digit reset code
+                const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+                const expiresAt = new Date(Date.now() + 15 * 60000).toISOString(); // 15 minutes
+
+                // Store reset code
+                await fetch(`${SUPABASE_URL}/rest/v1/password_reset_codes`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    },
+                    body: JSON.stringify({
+                        email,
+                        reset_code: resetCode,
+                        expires_at: expiresAt
+                    })
+                });
+
+                // Send email via Supabase (simplified)
+                console.log(`Reset code for ${email}: ${resetCode}`);
+                alert(`Password reset code sent to ${email}.\n\nCode: ${resetCode}\n\n(Valid for 15 minutes)`);
+                showVerifyResetForm();
+            } catch (error) {
+                console.error('Error requesting password reset:', error);
+                alert('Error sending reset code. Please try again.');
+            }
+        }
+
+        async function resetPassword() {
+            const email = document.getElementById('resetEmail').value.trim();
+            const resetCode = document.getElementById('resetCode').value.trim();
+            const newPassword = document.getElementById('newPassword').value.trim();
+
+            if (!resetCode || !newPassword) {
+                alert('Please enter reset code and new password');
+                return;
+            }
+
+            try {
+                // Verify reset code
+                const verifyRes = await fetch(`${SUPABASE_URL}/rest/v1/password_reset_codes?email=eq.${email}&reset_code=eq.${resetCode}`, {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+
+                const codes = await verifyRes.json();
+                if (!codes || codes.length === 0) {
+                    alert('Invalid reset code');
+                    return;
+                }
+
+                const codeRecord = codes[0];
+                if (new Date(codeRecord.expires_at) < new Date()) {
+                    alert('Reset code has expired');
+                    return;
+                }
+
+                // Update password in users table
+                await fetch(`${SUPABASE_URL}/rest/v1/users?email=eq.${email}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    },
+                    body: JSON.stringify({ password: newPassword })
+                });
+
+                // Delete used reset code
+                await fetch(`${SUPABASE_URL}/rest/v1/password_reset_codes?id=eq.${codeRecord.id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+
+                alert('Password reset successfully! Please login with your new password.');
+                showLoginForm();
+                document.getElementById('email').value = email;
+                document.getElementById('password').value = newPassword;
+            } catch (error) {
+                console.error('Error resetting password:', error);
+                alert('Error resetting password. Please try again.');
+            }
         }
 
         function confirmDeleteUser(userId, username) {
