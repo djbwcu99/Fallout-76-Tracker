@@ -467,6 +467,32 @@
             margin-bottom: 20px;
             flex-wrap: wrap;
             position: relative;
+            align-items: flex-start;
+        }
+
+        .user-tab-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            position: relative;
+        }
+
+        .delete-user-btn {
+            background: #ff3333;
+            color: #fff;
+            border: 1px solid #ff3333;
+            padding: 2px 6px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 3px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .delete-user-btn:hover {
+            background: #cc0000;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
             z-index: 1;
         }
 
@@ -879,6 +905,50 @@
             document.getElementById('password').value = '';
         }
 
+        function confirmDeleteUser(userId, username) {
+            if (confirm(`Are you sure you want to delete ${username}?`)) {
+                deleteUser(userId, username);
+            }
+        }
+
+        async function deleteUser(userId, username) {
+            try {
+                // Delete user from users table
+                const deleteUserRes = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+
+                if (!deleteUserRes.ok) {
+                    alert('Error deleting user');
+                    return;
+                }
+
+                // Delete all items associated with this user
+                await fetch(`${SUPABASE_URL}/rest/v1/tracker_items?user_id=eq.${userId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+
+                alert(`User "${username}" has been deleted.`);
+                await loadAllUsers();
+                renderUserTabs();
+                currentViewingUserId = allUsers.length > 0 ? allUsers[0].id : null;
+                render();
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                alert('Error deleting user');
+            }
+        }
+
         async function checkExistingSession() {
             const savedUsername = localStorage.getItem('fo76_username');
             if (savedUsername) {
@@ -966,12 +1036,19 @@
 
         function renderUserTabs() {
             const container = document.getElementById('userTabs');
-            container.innerHTML = allUsers.map(user => `
-                <button class="user-tab ${user.id === currentViewingUserId ? 'active' : ''}"
-                        onclick="switchUser('${user.id}')">
-                    ${user.username}
-                </button>
-            `).join('');
+            container.innerHTML = allUsers.map(user => {
+                const deleteBtn = isAdmin() && user.username !== 'Reddalewcu' ?
+                    `<button class="delete-user-btn" onclick="confirmDeleteUser('${user.id}', '${user.username}')">×</button>` : '';
+                return `
+                    <div class="user-tab-wrapper">
+                        <button class="user-tab ${user.id === currentViewingUserId ? 'active' : ''}"
+                                onclick="switchUser('${user.id}')">
+                            ${user.username}
+                        </button>
+                        ${deleteBtn}
+                    </div>
+                `;
+            }).join('');
         }
 
         function switchUser(userId) {
