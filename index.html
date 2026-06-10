@@ -272,7 +272,7 @@
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            grid-template-columns: repeat(7, 1fr);
             gap: 15px;
             margin-bottom: 20px;
             position: relative;
@@ -698,7 +698,7 @@
 
             <!-- CATEGORY: Titles -->
             <h1 style="color: #00ff41; font-size: 20px; margin-bottom: 20px; border-bottom: 2px solid #00ff41; padding-bottom: 10px;">👤 Titles</h1>
-            <div class="sections" style="margin-bottom: 40px;">
+            <div class="sections" style="grid-template-columns: 1fr 1fr; margin-bottom: 40px;">
                 <div class="section">
                     <h2>Player Titles</h2>
                     <div class="item-list" id="playerTitlesList"></div>
@@ -715,46 +715,52 @@
                         <input type="text" id="campTitlesInput" placeholder="Add camp title...">
                         <button onclick="addCampTitle()">Add</button>
                     </div>
+                </div>
             </div>
 
             <!-- CATEGORY: Fasnacht -->
             <h1 style="color: #00ff41; font-size: 20px; margin-bottom: 20px; border-bottom: 2px solid #00ff41; padding-bottom: 10px;">🎭 Fasnacht</h1>
-            <div class="sections" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 40px;">
-                <div class="section">
-                    <h2>Glowing Masks</h2>
-                    <div class="item-list" id="fasnachtGlowingMasksList"></div>
-                    <div class="add-item admin-only" id="fasnachtGlowingMasksAddSection">
-                        <input type="text" id="fasnachtGlowingMasksInput" placeholder="Add glowing mask...">
-                        <button onclick="addFasnachtGlowingMask()">Add</button>
+            <div style="background: rgba(0, 40, 0, 0.7); border: 2px solid #00ff41; padding: 20px; margin-bottom: 40px; box-shadow: inset 0 0 20px rgba(0, 255, 65, 0.12);">
+                <div class="sections" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <div class="section" style="background: none; border: none; box-shadow: none; padding: 0;">
+                        <h2>Glowing Masks</h2>
+                        <div class="item-list" id="fasnachtGlowingMasksList"></div>
+                        <div class="add-item admin-only" id="fasnachtGlowingMasksAddSection">
+                            <input type="text" id="fasnachtGlowingMasksInput" placeholder="Add glowing mask...">
+                            <button onclick="addFasnachtGlowingMask()">Add</button>
+                        </div>
+                    </div>
+
+                    <div class="section" style="background: none; border: none; box-shadow: none; padding: 0;">
+                        <h2>Masks</h2>
+                        <div class="item-list" id="fasnachtMasksList"></div>
+                        <div class="add-item admin-only" id="fasnachtMasksAddSection">
+                            <input type="text" id="fasnachtMasksInput" placeholder="Add mask...">
+                            <button onclick="addFasnachtMask()">Add</button>
+                        </div>
+                    </div>
+
+                    <div class="section" style="background: none; border: none; box-shadow: none; padding: 0;">
+                        <h2>Gear</h2>
+                        <div class="item-list" id="fasnachtGearList"></div>
+                        <div class="add-item admin-only" id="fasnachtGearAddSection">
+                            <input type="text" id="fasnachtGearInput" placeholder="Add gear...">
+                            <button onclick="addFasnachtGear()">Add</button>
+                        </div>
                     </div>
                 </div>
-
-                <div class="section">
-                    <h2>Masks</h2>
-                    <div class="item-list" id="fasnachtMasksList"></div>
-                    <div class="add-item admin-only" id="fasnachtMasksAddSection">
-                        <input type="text" id="fasnachtMasksInput" placeholder="Add mask...">
-                        <button onclick="addFasnachtMask()">Add</button>
-                    </div>
-                </div>
-
-                <div class="section">
-                    <h2>Gear</h2>
-                    <div class="item-list" id="fasnachtGearList"></div>
-                    <div class="add-item admin-only" id="fasnachtGearAddSection">
-                        <input type="text" id="fasnachtGearInput" placeholder="Add gear...">
-                        <button onclick="addFasnachtGear()">Add</button>
-                    </div>
             </div>
 
             <!-- CATEGORY: Rare Apparel -->
             <h1 style="color: #00ff41; font-size: 20px; margin-bottom: 20px; border-bottom: 2px solid #00ff41; padding-bottom: 10px;">👗 Rare Apparel</h1>
-            <div class="section" style="margin-bottom: 40px;">
-                <h2>Rare Apparel</h2>
-                <div class="item-list" id="equipmentList"></div>
-                <div class="add-item admin-only" id="equipmentAddSection">
-                    <input type="text" id="equipmentInput" placeholder="Add rare apparel...">
-                    <button onclick="addEquipment()">Add</button>
+            <div style="background: rgba(0, 40, 0, 0.7); border: 2px solid #00ff41; padding: 20px; margin-bottom: 40px; box-shadow: inset 0 0 20px rgba(0, 255, 65, 0.12);">
+                <div class="section" style="background: none; border: none; box-shadow: none; padding: 0;">
+                    <h2>Rare Apparel</h2>
+                    <div class="item-list" id="equipmentList"></div>
+                    <div class="add-item admin-only" id="equipmentAddSection">
+                        <input type="text" id="equipmentInput" placeholder="Add rare apparel...">
+                        <button onclick="addEquipment()">Add</button>
+                    </div>
                 </div>
             </div>
         </div>
