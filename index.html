@@ -974,7 +974,7 @@
         let allUsers = [];
 
         function isAdmin() {
-            return currentUser && currentUser.username === ADMIN_USER;
+            return currentUser && currentUser.username.toLowerCase() === ADMIN_USER.toLowerCase();
         }
 
         // Helper function for API calls
@@ -1021,18 +1021,22 @@
                 return;
             }
 
+            let resolvedUsername = username;
             try {
-                // Register user in database
-                await apiCall('/users', 'POST', { username, email });
+                // Case-insensitive check to prevent duplicates
+                const existing = await apiCall(`/users?username=ilike.${encodeURIComponent(username)}`);
+                if (existing && existing.length > 0) {
+                    resolvedUsername = existing[0].username;
+                } else {
+                    await apiCall('/users', 'POST', { username, email });
+                }
             } catch (error) {
-                // User might already exist, that's ok
                 console.log('User registration note:', error.message);
             }
 
-            // Save to localStorage
-            localStorage.setItem('fo76_username', username);
-            currentUser = { username, id: username };
-            currentViewingUserId = username;
+            localStorage.setItem('fo76_username', resolvedUsername);
+            currentUser = { username: resolvedUsername, id: resolvedUsername };
+            currentViewingUserId = resolvedUsername;
             await loadAllUsers();
             showTrackerUI();
             document.getElementById('username').value = '';
