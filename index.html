@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fallout 76 Group Items Tracker</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js"></script>
+    <script src="https://unpkg.com/xlsx@latest/dist/xlsx.full.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
 
@@ -693,7 +693,10 @@
     <div class="container">
         <div class="header-controls">
             <h1>⚛️ Fallout 76 Group Items Tracker</h1>
-            <button class="export-btn" onclick="openExportModal()">📊 Export</button>
+            <div style="display: flex; gap: 10px;">
+                <button class="export-btn admin-only hidden" id="bulkImportBtn" onclick="openBulkImportModal()">📥 Bulk Import</button>
+                <button class="export-btn" onclick="openExportModal()">📊 Export</button>
+            </div>
         </div>
         <p class="subtitle">Track your equipment and titles earned</p>
 
@@ -764,9 +767,34 @@
             <div class="modal-content">
                 <h2>Export Data</h2>
                 <div class="modal-buttons">
-                    <button onclick="exportToExcel()">📈 Export to Excel</button>
+                    <button onclick="exportToExcel()">📊 Export to Excel</button>
                     <button onclick="exportToCSV()">📄 Export to CSV</button>
                     <button class="cancel-btn" onclick="closeExportModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bulk Import Modal (Admin Only) -->
+        <div id="bulkImportModal" class="modal admin-only" style="display: none;">
+            <div class="modal-content">
+                <h2>Bulk Import Items</h2>
+                <select id="bulkImportCategory" style="width: 100%; padding: 10px; margin-bottom: 10px; background: rgba(0, 30, 0, 0.9); border: 2px solid #00ff41; color: #00ff41; font-family: 'Orbitron', monospace;">
+                    <option value="">-- Select Category --</option>
+                    <option value="equipment|">Rare Apparel</option>
+                    <option value="titles|player">Player Titles</option>
+                    <option value="titles|camp">Camp Titles</option>
+                    <option value="mods|1-Star">1-Star Mods</option>
+                    <option value="mods|2-Star">2-Star Mods</option>
+                    <option value="mods|3-Star">3-Star Mods</option>
+                    <option value="mods|4-Star">4-Star Mods</option>
+                    <option value="fasnacht|glowing-mask">Fasnacht - Glowing Masks</option>
+                    <option value="fasnacht|mask">Fasnacht - Masks</option>
+                    <option value="fasnacht|gear">Fasnacht - Gear</option>
+                </select>
+                <textarea id="bulkImportText" placeholder="Paste items here (one per line)..." style="width: 100%; height: 200px; padding: 10px; margin-bottom: 10px; background: rgba(0, 30, 0, 0.9); border: 2px solid #00ff41; color: #00ff41; font-family: 'Orbitron', monospace;"></textarea>
+                <div class="modal-buttons">
+                    <button onclick="bulkImportItems()">📥 Import Items</button>
+                    <button class="cancel-btn" onclick="closeBulkImportModal()">Cancel</button>
                 </div>
             </div>
         </div>
@@ -949,7 +977,7 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmdXRjZGRyZ3NxdHNmbnh6aHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMTAyOTQsImV4cCI6MjA5NjU4NjI5NH0.6c9sa0R24-bgZjtgGi8TkhL-ydwQuP3ijQuFAtdk7go';
         const API_URL = SUPABASE_URL + '/rest/v1';
 
-        const ADMIN_USER = 'reddalewcu';
+        const ADMIN_USER = 'Reddalewcu';
 
         let currentUser = null;
         let currentViewingUserId = null;
@@ -994,7 +1022,11 @@
 
         // Authentication (simplified - no server-side storage needed)
         async function signup() {
-            let username = document.getElementById('username').value.trim().toLowerCase();
+            let username = document.getElementById('username').value.trim();
+            // Only convert non-admin usernames to lowercase
+            if (username !== 'Reddalewcu') {
+                username = username.toLowerCase();
+            }
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value.trim();
 
@@ -1027,7 +1059,11 @@
         }
 
         async function login() {
-            let username = document.getElementById('username').value.trim().toLowerCase();
+            let username = document.getElementById('username').value.trim();
+            // Only convert non-admin usernames to lowercase
+            if (username !== 'Reddalewcu') {
+                username = username.toLowerCase();
+            }
             if (!username) {
                 alert('Please enter username');
                 return;
@@ -1326,7 +1362,7 @@
         function renderUserTabs() {
             const container = document.getElementById('userTabs');
             container.innerHTML = allUsers.map(user => {
-                const deleteBtn = isAdmin() && user.username !== 'reddalewcu' ?
+                const deleteBtn = isAdmin() && user.username !== 'Reddalewcu' ?
                     `<button class="delete-user-btn" onclick="confirmDeleteUser('${user.id}', '${user.username}')">×</button>` : '';
                 return `
                     <div class="user-tab-wrapper">
@@ -1674,6 +1710,61 @@
 
         function closeExportModal() {
             document.getElementById('exportModal').style.display = 'none';
+        }
+
+        function openBulkImportModal() {
+            if (!isAdmin()) {
+                alert('Only admin can bulk import items');
+                return;
+            }
+            document.getElementById('bulkImportModal').style.display = 'block';
+        }
+
+        function closeBulkImportModal() {
+            document.getElementById('bulkImportModal').style.display = 'none';
+        }
+
+        async function bulkImportItems() {
+            if (!isAdmin()) {
+                alert('Only admin can bulk import items');
+                return;
+            }
+
+            const categoryValue = document.getElementById('bulkImportCategory').value;
+            const itemsText = document.getElementById('bulkImportText').value.trim();
+
+            if (!categoryValue || !itemsText) {
+                alert('Please select a category and enter items');
+                return;
+            }
+
+            const [category, rarity] = categoryValue.split('|');
+            const items = itemsText.split('\n').map(item => item.trim()).filter(item => item.length > 0);
+
+            if (items.length === 0) {
+                alert('No items to import');
+                return;
+            }
+
+            try {
+                let importedCount = 0;
+                for (const itemName of items) {
+                    try {
+                        await addItem(category, itemName, rarity || null);
+                        importedCount++;
+                    } catch (error) {
+                        console.log(`Failed to add ${itemName}:`, error.message);
+                    }
+                }
+                alert(`Successfully imported ${importedCount} of ${items.length} items`);
+                document.getElementById('bulkImportText').value = '';
+                document.getElementById('bulkImportCategory').value = '';
+                closeBulkImportModal();
+                await render();
+            } catch (error) {
+                console.error('Bulk import error:', error);
+                alert('Error during bulk import');
+            }
         }
 
         async function exportToExcel() {
