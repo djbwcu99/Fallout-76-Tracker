@@ -1255,8 +1255,18 @@
         async function checkExistingSession() {
             const savedUsername = localStorage.getItem('fo76_username');
             if (savedUsername) {
-                currentUser = { username: savedUsername, id: savedUsername };
-                currentViewingUserId = savedUsername;
+                let resolvedUsername = savedUsername;
+                try {
+                    const existing = await apiCall(`/users?username=ilike.${encodeURIComponent(savedUsername)}`);
+                    if (existing && existing.length > 0) {
+                        resolvedUsername = existing[0].username;
+                        localStorage.setItem('fo76_username', resolvedUsername);
+                    }
+                } catch (error) {
+                    console.log('Session restore note:', error.message);
+                }
+                currentUser = { username: resolvedUsername, id: resolvedUsername };
+                currentViewingUserId = resolvedUsername;
                 await loadAllUsers();
                 showTrackerUI();
             } else {
