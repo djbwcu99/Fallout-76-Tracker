@@ -1047,18 +1047,22 @@
                 return;
             }
 
+            let resolvedUsername = username;
             try {
-                // Register/update user in database
-                await apiCall('/users', 'POST', { username, email: '' });
+                // Case-insensitive lookup so "reddalewcu" finds existing "Reddalewcu"
+                const existing = await apiCall(`/users?username=ilike.${encodeURIComponent(username)}`);
+                if (existing && existing.length > 0) {
+                    resolvedUsername = existing[0].username;
+                } else {
+                    await apiCall('/users', 'POST', { username, email: '' });
+                }
             } catch (error) {
-                // User might already exist, that's ok
                 console.log('User login note:', error.message);
             }
 
-            // Save to localStorage
-            localStorage.setItem('fo76_username', username);
-            currentUser = { username, id: username };
-            currentViewingUserId = username;
+            localStorage.setItem('fo76_username', resolvedUsername);
+            currentUser = { username: resolvedUsername, id: resolvedUsername };
+            currentViewingUserId = resolvedUsername;
             await loadAllUsers();
             showTrackerUI();
         }
@@ -1263,15 +1267,19 @@
 
         async function loadAllUsers() {
             try {
-                // Get all registered users
                 const users = await apiCall('/users');
-                console.log('Raw users from API:', users);
-                allUsers = users.map(u => ({ username: u.username, id: u.username }));
-                // Add current user if not already in list
-                if (!allUsers.find(u => u.id === currentViewingUserId)) {
+                // Deduplicate case-insensitively, preferring exact-case match to ADMIN_USER
+                const seen = new Map();
+                users.forEach(u => {
+                    const key = u.username.toLowerCase();
+                    if (!seen.has(key) || u.username === ADMIN_USER) {
+                        seen.set(key, u);
+                    }
+                });
+                allUsers = Array.from(seen.values()).map(u => ({ username: u.username, id: u.username }));
+                if (!allUsers.find(u => u.id.toLowerCase() === currentViewingUserId.toLowerCase())) {
                     allUsers.unshift({ username: currentUser.username, id: currentViewingUserId });
                 }
-                console.log('Final loaded users:', allUsers);
             } catch (error) {
                 console.error('Error loading users:', error);
                 allUsers = [{ username: currentUser.username, id: currentViewingUserId }];
