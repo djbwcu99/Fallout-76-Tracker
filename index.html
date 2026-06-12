@@ -71,116 +71,9 @@
             margin-bottom: 30px;
         }
 
-        .sections-3col {
-            grid-template-columns: 1fr 1fr 1fr;
-        }
-
         @media (max-width: 768px) {
-            body {
-                padding: 10px;
-                background-attachment: scroll;
-            }
-
-            .container {
-                padding: 15px;
-            }
-
-            h1 {
-                font-size: 20px;
-                letter-spacing: 0;
-            }
-
-            .subtitle {
-                font-size: 10px;
-                margin-bottom: 15px;
-            }
-
-            .header-controls {
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-            }
-
-            .export-btn {
-                width: 100%;
-            }
-
-            .sections,
-            .sections-3col {
+            .sections {
                 grid-template-columns: 1fr;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 8px;
-            }
-
-            .stat-number {
-                font-size: 22px;
-            }
-
-            .stat-label {
-                font-size: 8px;
-            }
-
-            .auth-panel {
-                max-width: 100%;
-            }
-
-            input[type="text"],
-            input[type="email"],
-            input[type="password"] {
-                font-size: 16px;
-            }
-
-            .add-item {
-                flex-direction: column;
-            }
-
-            .add-item button {
-                width: 100%;
-            }
-
-            .item {
-                padding: 10px 8px;
-            }
-
-            .item label {
-                font-size: 12px;
-            }
-
-            .user-tab {
-                padding: 10px 12px;
-                font-size: 12px;
-            }
-
-            .modal-content {
-                width: 92%;
-                margin: 10% auto;
-                padding: 20px;
-            }
-
-            .section {
-                padding: 15px;
-            }
-
-            .leaderboard-section {
-                padding: 15px;
-            }
-
-            .section h2,
-            .leaderboard-section h2 {
-                font-size: 14px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            h1 {
-                font-size: 15px;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
             }
         }
 
@@ -769,6 +662,31 @@
             padding: 2px 6px;
             border: 1px solid #00ff41;
         }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .toggle-all-btn {
+            background: #00aa20;
+            color: #000;
+            border: 1px solid #00ff41;
+            padding: 5px 12px;
+            font-size: 11px;
+            cursor: pointer;
+            border-radius: 3px;
+            font-weight: bold;
+            transition: all 0.2s;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .toggle-all-btn:hover {
+            background: #00ff41;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+        }
     </style>
 </head>
 <body>
@@ -788,6 +706,10 @@
                 <input type="text" id="username" placeholder="Username">
                 <input type="email" id="email" placeholder="Email">
                 <input type="password" id="password" placeholder="Password">
+                <label style="display: flex; align-items: center; gap: 8px; color: #00ff41; margin: 10px 0; cursor: pointer; font-size: 12px;">
+                    <input type="checkbox" id="stayLoggedIn" checked style="cursor: pointer;">
+                    Stay logged in
+                </label>
                 <div class="auth-buttons">
                     <button onclick="login()">Login</button>
                     <span class="auth-separator">|</span>
@@ -854,7 +776,10 @@
             <h1 style="color: #00ff41; font-size: 20px; margin-bottom: 20px; border-bottom: 2px solid #00ff41; padding-bottom: 10px;">📦 Mods Acquired</h1>
             <div class="sections" style="margin-bottom: 40px;">
                     <div class="subsection">
-                        <h3>1-Star Mods</h3>
+                        <div class="section-header">
+                            <h3 style="margin: 0;">1-Star Mods</h3>
+                            <button class="toggle-all-btn" onclick="toggleAllItems('mods1StarList')">Toggle All</button>
+                        </div>
                         <div class="item-list" id="mods1StarList"></div>
                         <div class="add-item admin-only" id="mods1StarAddSection">
                             <input type="text" id="mods1StarInput" placeholder="Add 1-star mod...">
@@ -863,7 +788,10 @@
                     </div>
 
                     <div class="subsection">
-                        <h3>2-Star Mods</h3>
+                        <div class="section-header">
+                            <h3 style="margin: 0;">2-Star Mods</h3>
+                            <button class="toggle-all-btn" onclick="toggleAllItems('mods2StarList')">Toggle All</button>
+                        </div>
                         <div class="item-list" id="mods2StarList"></div>
                         <div class="add-item admin-only" id="mods2StarAddSection">
                             <input type="text" id="mods2StarInput" placeholder="Add 2-star mod...">
@@ -872,7 +800,10 @@
                     </div>
 
                     <div class="subsection">
-                        <h3>3-Star Mods</h3>
+                        <div class="section-header">
+                            <h3 style="margin: 0;">3-Star Mods</h3>
+                            <button class="toggle-all-btn" onclick="toggleAllItems('mods3StarList')">Toggle All</button>
+                        </div>
                         <div class="item-list" id="mods3StarList"></div>
                         <div class="add-item admin-only" id="mods3StarAddSection">
                             <input type="text" id="mods3StarInput" placeholder="Add 3-star mod...">
@@ -881,7 +812,10 @@
                     </div>
 
                     <div class="subsection">
-                        <h3>4-Star Mods</h3>
+                        <div class="section-header">
+                            <h3 style="margin: 0;">4-Star Mods</h3>
+                            <button class="toggle-all-btn" onclick="toggleAllItems('mods4StarList')">Toggle All</button>
+                        </div>
                         <div class="item-list" id="mods4StarList"></div>
                         <div class="add-item admin-only" id="mods4StarAddSection">
                             <input type="text" id="mods4StarInput" placeholder="Add 4-star mod...">
@@ -892,9 +826,12 @@
 
             <!-- CATEGORY: Titles -->
             <h1 style="color: #00ff41; font-size: 20px; margin-bottom: 20px; border-bottom: 2px solid #00ff41; padding-bottom: 10px;">👤 Titles</h1>
-            <div class="sections" style="margin-bottom: 40px;">
+            <div class="sections" style="grid-template-columns: 1fr 1fr; margin-bottom: 40px;">
                 <div class="section">
-                    <h2>Player Titles</h2>
+                    <div class="section-header">
+                        <h2 style="margin: 0;">Player Titles</h2>
+                        <button class="toggle-all-btn" onclick="toggleAllItems('playerTitlesList')">Toggle All</button>
+                    </div>
                     <div class="item-list" id="playerTitlesList"></div>
                     <div class="add-item admin-only" id="playerTitlesAddSection">
                         <input type="text" id="playerTitlesInput" placeholder="Add player title...">
@@ -903,7 +840,10 @@
                 </div>
 
                 <div class="section">
-                    <h2>Camp Titles</h2>
+                    <div class="section-header">
+                        <h2 style="margin: 0;">Camp Titles</h2>
+                        <button class="toggle-all-btn" onclick="toggleAllItems('campTitlesList')">Toggle All</button>
+                    </div>
                     <div class="item-list" id="campTitlesList"></div>
                     <div class="add-item admin-only" id="campTitlesAddSection">
                         <input type="text" id="campTitlesInput" placeholder="Add camp title...">
@@ -915,9 +855,12 @@
             <!-- CATEGORY: Fasnacht -->
             <h1 style="color: #00ff41; font-size: 20px; margin-bottom: 20px; border-bottom: 2px solid #00ff41; padding-bottom: 10px;">🎭 Fasnacht</h1>
             <div style="background: rgba(0, 40, 0, 0.7); border: 2px solid #00ff41; padding: 20px; margin-bottom: 40px; box-shadow: inset 0 0 20px rgba(0, 255, 65, 0.12);">
-                <div class="sections sections-3col">
+                <div class="sections" style="grid-template-columns: 1fr 1fr 1fr;">
                     <div class="section" style="background: none; border: none; box-shadow: none; padding: 0;">
-                        <h2>Glowing Masks</h2>
+                        <div class="section-header">
+                            <h2 style="margin: 0;">Glowing Masks</h2>
+                            <button class="toggle-all-btn" onclick="toggleAllItems('fasnachtGlowingMasksList')">Toggle All</button>
+                        </div>
                         <div class="item-list" id="fasnachtGlowingMasksList"></div>
                         <div class="add-item admin-only" id="fasnachtGlowingMasksAddSection">
                             <input type="text" id="fasnachtGlowingMasksInput" placeholder="Add glowing mask...">
@@ -926,7 +869,10 @@
                     </div>
 
                     <div class="section" style="background: none; border: none; box-shadow: none; padding: 0;">
-                        <h2>Masks</h2>
+                        <div class="section-header">
+                            <h2 style="margin: 0;">Masks</h2>
+                            <button class="toggle-all-btn" onclick="toggleAllItems('fasnachtMasksList')">Toggle All</button>
+                        </div>
                         <div class="item-list" id="fasnachtMasksList"></div>
                         <div class="add-item admin-only" id="fasnachtMasksAddSection">
                             <input type="text" id="fasnachtMasksInput" placeholder="Add mask...">
@@ -935,7 +881,10 @@
                     </div>
 
                     <div class="section" style="background: none; border: none; box-shadow: none; padding: 0;">
-                        <h2>Gear</h2>
+                        <div class="section-header">
+                            <h2 style="margin: 0;">Gear</h2>
+                            <button class="toggle-all-btn" onclick="toggleAllItems('fasnachtGearList')">Toggle All</button>
+                        </div>
                         <div class="item-list" id="fasnachtGearList"></div>
                         <div class="add-item admin-only" id="fasnachtGearAddSection">
                             <input type="text" id="fasnachtGearInput" placeholder="Add gear...">
@@ -949,7 +898,10 @@
             <h1 style="color: #00ff41; font-size: 20px; margin-bottom: 20px; border-bottom: 2px solid #00ff41; padding-bottom: 10px;">👗 Rare Apparel</h1>
             <div style="background: rgba(0, 40, 0, 0.7); border: 2px solid #00ff41; padding: 20px; margin-bottom: 40px; box-shadow: inset 0 0 20px rgba(0, 255, 65, 0.12);">
                 <div class="section" style="background: none; border: none; box-shadow: none; padding: 0;">
-                    <h2>Rare Apparel</h2>
+                    <div class="section-header">
+                        <h2 style="margin: 0;">Rare Apparel</h2>
+                        <button class="toggle-all-btn" onclick="toggleAllItems('equipmentList')">Toggle All</button>
+                    </div>
                     <div class="item-list" id="equipmentList"></div>
                     <div class="add-item admin-only" id="equipmentAddSection">
                         <input type="text" id="equipmentInput" placeholder="Add rare apparel...">
@@ -974,7 +926,7 @@
         let allUsers = [];
 
         function isAdmin() {
-            return currentUser && currentUser.username.toLowerCase() === ADMIN_USER.toLowerCase();
+            return currentUser && currentUser.username === ADMIN_USER;
         }
 
         // Helper function for API calls
@@ -1021,22 +973,22 @@
                 return;
             }
 
-            let resolvedUsername = username;
             try {
-                // Case-insensitive check to prevent duplicates
-                const existing = await apiCall(`/users?username=ilike.${encodeURIComponent(username)}`);
-                if (existing && existing.length > 0) {
-                    resolvedUsername = existing[0].username;
-                } else {
-                    await apiCall('/users', 'POST', { username, email });
-                }
+                // Register user in database
+                await apiCall('/users', 'POST', { username, email });
             } catch (error) {
+                // User might already exist, that's ok
                 console.log('User registration note:', error.message);
             }
 
-            localStorage.setItem('fo76_username', resolvedUsername);
-            currentUser = { username: resolvedUsername, id: resolvedUsername };
-            currentViewingUserId = resolvedUsername;
+            // Save to localStorage only if "Stay logged in" is checked
+            if (document.getElementById('stayLoggedIn').checked) {
+                localStorage.setItem('fo76_username', username);
+            } else {
+                localStorage.removeItem('fo76_username');
+            }
+            currentUser = { username, id: username };
+            currentViewingUserId = username;
             await loadAllUsers();
             showTrackerUI();
             document.getElementById('username').value = '';
@@ -1051,22 +1003,22 @@
                 return;
             }
 
-            let resolvedUsername = username;
             try {
-                // Case-insensitive lookup so "reddalewcu" finds existing "Reddalewcu"
-                const existing = await apiCall(`/users?username=ilike.${encodeURIComponent(username)}`);
-                if (existing && existing.length > 0) {
-                    resolvedUsername = existing[0].username;
-                } else {
-                    await apiCall('/users', 'POST', { username, email: '' });
-                }
+                // Register/update user in database
+                await apiCall('/users', 'POST', { username, email: '' });
             } catch (error) {
+                // User might already exist, that's ok
                 console.log('User login note:', error.message);
             }
 
-            localStorage.setItem('fo76_username', resolvedUsername);
-            currentUser = { username: resolvedUsername, id: resolvedUsername };
-            currentViewingUserId = resolvedUsername;
+            // Save to localStorage only if "Stay logged in" is checked
+            if (document.getElementById('stayLoggedIn').checked) {
+                localStorage.setItem('fo76_username', username);
+            } else {
+                localStorage.removeItem('fo76_username');
+            }
+            currentUser = { username, id: username };
+            currentViewingUserId = username;
             await loadAllUsers();
             showTrackerUI();
         }
@@ -1259,18 +1211,8 @@
         async function checkExistingSession() {
             const savedUsername = localStorage.getItem('fo76_username');
             if (savedUsername) {
-                let resolvedUsername = savedUsername;
-                try {
-                    const existing = await apiCall(`/users?username=ilike.${encodeURIComponent(savedUsername)}`);
-                    if (existing && existing.length > 0) {
-                        resolvedUsername = existing[0].username;
-                        localStorage.setItem('fo76_username', resolvedUsername);
-                    }
-                } catch (error) {
-                    console.log('Session restore note:', error.message);
-                }
-                currentUser = { username: resolvedUsername, id: resolvedUsername };
-                currentViewingUserId = resolvedUsername;
+                currentUser = { username: savedUsername, id: savedUsername };
+                currentViewingUserId = savedUsername;
                 await loadAllUsers();
                 showTrackerUI();
             } else {
@@ -1281,19 +1223,15 @@
 
         async function loadAllUsers() {
             try {
+                // Get all registered users
                 const users = await apiCall('/users');
-                // Deduplicate case-insensitively, preferring exact-case match to ADMIN_USER
-                const seen = new Map();
-                users.forEach(u => {
-                    const key = u.username.toLowerCase();
-                    if (!seen.has(key) || u.username === ADMIN_USER) {
-                        seen.set(key, u);
-                    }
-                });
-                allUsers = Array.from(seen.values()).map(u => ({ username: u.username, id: u.username }));
-                if (!allUsers.find(u => u.id.toLowerCase() === currentViewingUserId.toLowerCase())) {
+                console.log('Raw users from API:', users);
+                allUsers = users.map(u => ({ username: u.username, id: u.username }));
+                // Add current user if not already in list
+                if (!allUsers.find(u => u.id === currentViewingUserId)) {
                     allUsers.unshift({ username: currentUser.username, id: currentViewingUserId });
                 }
+                console.log('Final loaded users:', allUsers);
             } catch (error) {
                 console.error('Error loading users:', error);
                 allUsers = [{ username: currentUser.username, id: currentViewingUserId }];
@@ -1613,6 +1551,21 @@
                     ${isAdmin() ? `<button class="delete-btn" onclick="deleteItem('${item.id}')">×</button>` : ''}
                 </div>
             `).join('');
+        }
+
+        async function toggleAllItems(sectionId) {
+            const itemList = document.getElementById(sectionId);
+            if (!itemList) return;
+
+            const checkboxes = itemList.querySelectorAll('input[type="checkbox"]');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+
+            // Toggle all checkboxes
+            for (const checkbox of checkboxes) {
+                if (allChecked !== checkbox.checked) {
+                    checkbox.click();
+                }
+            }
         }
 
         async function updateStats() {
