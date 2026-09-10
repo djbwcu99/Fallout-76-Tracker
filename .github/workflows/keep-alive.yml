@@ -1,0 +1,31 @@
+name: Supabase Keep-Alive
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    name: Ping Supabase Projects
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping Calendar App 2026
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://ahdcdasfqhqsimxmfpkj.supabase.co/rest/v1/" \
+            -H "apikey: ${{ secrets.SUPABASE_CALENDAR_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_CALENDAR_ANON_KEY }}")
+          echo "Calendar App ping status: $STATUS"
+
+      - name: Ping Fallout 76 Tracker
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://ffutcddrgsqtsfnxzhpc.supabase.co/rest/v1/" \
+            -H "apikey: ${{ secrets.SUPABASE_FO76_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_FO76_ANON_KEY }}")
+          echo "FO76 Tracker ping status: $STATUS"
+
+      - name: Summary
+        run: echo "Weekly keep-alive pings complete at $(date -u)."
