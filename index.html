@@ -790,6 +790,7 @@
                     <option value="fasnacht|glowing-mask">Fasnacht - Glowing Masks</option>
                     <option value="fasnacht|mask">Fasnacht - Masks</option>
                     <option value="fasnacht|gear">Fasnacht - Gear</option>
+                    <option value="pint-size-slasher|">Pint Size Slasher Rewards</option>
                 </select>
                 <textarea id="bulkImportText" placeholder="Paste items here (one per line)..." style="width: 100%; height: 200px; padding: 10px; margin-bottom: 10px; background: rgba(0, 30, 0, 0.9); border: 2px solid #00ff41; color: #00ff41; font-family: 'Orbitron', monospace;"></textarea>
                 <div class="modal-buttons">
@@ -964,6 +965,25 @@
                     <div class="add-item admin-only" id="equipmentAddSection">
                         <input type="text" id="equipmentInput" placeholder="Add rare apparel...">
                         <button onclick="addEquipment()">Add</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CATEGORY: Pint Size Slasher Rewards -->
+            <h1 style="color: #00ff41; font-size: 20px; margin-bottom: 20px; border-bottom: 2px solid #00ff41; padding-bottom: 10px;">🎃 Pint Size Slasher Rewards</h1>
+            <div style="background: rgba(0, 40, 0, 0.7); border: 2px solid #00ff41; padding: 20px; margin-bottom: 40px; box-shadow: inset 0 0 20px rgba(0, 255, 65, 0.12);">
+                <div class="section" style="background: none; border: none; box-shadow: none; padding: 0;">
+                    <div class="section-header">
+                        <h2 style="margin: 0;">Pint Size Slasher Rewards</h2>
+                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: #00ff41; font-size: 12px;">
+                            <input type="checkbox" data-toggle-section="pintSizeSlasherList" onchange="toggleAllItems('pintSizeSlasherList')">
+                            Check All
+                        </label>
+                    </div>
+                    <div class="item-list" id="pintSizeSlasherList"></div>
+                    <div class="add-item admin-only" id="pintSizeSlasherAddSection">
+                        <input type="text" id="pintSizeSlasherInput" placeholder="Add Pint Size Slasher reward...">
+                        <button onclick="addPintSizeSlasher()">Add</button>
                     </div>
                 </div>
             </div>
@@ -1522,6 +1542,14 @@
             }
         }
 
+        async function addPintSizeSlasher() {
+            const input = document.getElementById('pintSizeSlasherInput');
+            if (input.value.trim()) {
+                await addItem('pint-size-slasher', input.value.trim());
+                input.value = '';
+            }
+        }
+
         async function addFasnachtPlan() {
             const input = document.getElementById('fasnachtPlansInput');
             if (input.value.trim()) {
@@ -1668,7 +1696,9 @@
             const titlesEarned = [...playerTitles, ...campTitles].filter(i => i.earned).length;
             const modsEarned = [...mods1Star, ...mods2Star, ...mods3Star, ...mods4Star].filter(i => i.earned).length;
             const fasnachtEarned = [...fasnachtPlans, ...fasnachtMasks, ...fasnachtGlowingMasks, ...fasnachtGear].filter(i => i.earned).length;
-            const totalEarned = equipmentEarned + titlesEarned + modsEarned + fasnachtEarned;
+            const pintSizeSlasher = await getItems('pint-size-slasher');
+            const pintSizeSlasherEarned = pintSizeSlasher.filter(i => i.earned).length;
+            const totalEarned = equipmentEarned + titlesEarned + modsEarned + fasnachtEarned + pintSizeSlasherEarned;
 
             document.getElementById('equipmentEarned').textContent = equipmentEarned;
             document.getElementById('titlesEarned').textContent = titlesEarned;
@@ -1689,6 +1719,7 @@
             await renderList('fasnachtMasksList', 'fasnacht', 'mask');
             await renderList('fasnachtGlowingMasksList', 'fasnacht', 'glowing-mask');
             await renderList('fasnachtGearList', 'fasnacht', 'gear');
+            await renderList('pintSizeSlasherList', 'pint-size-slasher');
             await renderLeaderboard();
         }
 
